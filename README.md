@@ -2,7 +2,7 @@
 
 A skeleton project for building RESTful API with Go &amp; Gin using Clean Architecture.
 
-## Components
+## Dependencies
 
 * Web Framework: [gin-gonic/gin](https://github.com/gin-gonic/gin)
 * Configuration: [kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig)
