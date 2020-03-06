@@ -1,6 +1,6 @@
 # go-gin-skeleton
 
-A skeleton project for building web service with Go &amp; Gin using Clean Architecture.
+A skeleton project for building RESTful API with Go &amp; Gin using Clean Architecture.
 
 ## Components
 
