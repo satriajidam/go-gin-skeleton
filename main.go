@@ -6,7 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/satriajidam/go-gin-skeleton/cmd/server/config"
+	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 )
 
 func initLogger(config config.Config) {
@@ -41,12 +41,14 @@ func initDBConnection(config config.Config) (*gorm.DB, error) {
 	dsn := ""
 
 	switch mode {
+	case "sqlite3":
+		// TODO
 	case "mysql":
 		if params == "" {
 			params = "charset=utf8&parseTime=True&loc=Local"
 		}
 
-		dsn = fmt.Sprintf("%s:%s@%s:%s/%s?%s", user, pass, host, port, name, params)
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?%s", user, pass, host, port, name, params)
 	case "postgres":
 		if params == "" {
 			params = "sslmode=disable"
@@ -59,6 +61,8 @@ func initDBConnection(config config.Config) (*gorm.DB, error) {
 		}
 
 		dsn = fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s&%s", user, pass, host, port, name, params)
+	default:
+		return nil, fmt.Errorf("unknown database mode: %s", mode)
 	}
 
 	db, err := gorm.Open(mode, dsn)
