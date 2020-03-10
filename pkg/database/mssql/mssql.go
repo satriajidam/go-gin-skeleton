@@ -5,7 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
-	"github.com/satriajidam/go-gin-skeleton/pkg/logger"
+	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
 // Config stores Microsoft SQL Server database configurations.
@@ -24,7 +24,7 @@ type Config struct {
 var cfg *Config
 
 func init() {
-	cfg = Config{
+	cfg = &Config{
 		Host:          config.Get().PostgresHost,
 		Port:          config.Get().PostgresPort,
 		Username:      config.Get().PostgresUsername,
@@ -56,7 +56,7 @@ func DB() (*gorm.DB, error) {
 
 	logLevel := config.Get().AppLogLevel
 
-	if logLevel == logger.LogLevelDebug || logLevel == logger.LogLevelTrace {
+	if logLevel == log.LevelDebug || logLevel == log.LevelTrace {
 		db.LogMode(true)
 	} else {
 		db.LogMode(false)

@@ -10,26 +10,26 @@ import (
 )
 
 var (
-	// LogLevelPanic represents log level 5.
-	LogLevelPanic = zerolog.PanicLevel.String()
+	// LevelPanic represents log level 5.
+	LevelPanic = zerolog.PanicLevel.String()
 
-	// LogLevelFatal represents log level 4.
-	LogLevelFatal = zerolog.FatalLevel.String()
+	// LevelFatal represents log level 4.
+	LevelFatal = zerolog.FatalLevel.String()
 
-	// LogLevelError represents log level 3.
-	LogLevelError = zerolog.ErrorLevel.String()
+	// LevelError represents log level 3.
+	LevelError = zerolog.ErrorLevel.String()
 
-	// LogLevelWarn represents log level 2.
-	LogLevelWarn = zerolog.WarnLevel.String()
+	// LevelWarn represents log level 2.
+	LevelWarn = zerolog.WarnLevel.String()
 
-	// LogLevelInfo represents log level 1.
-	LogLevelInfo = zerolog.InfoLevel.String()
+	// LevelInfo represents log level 1.
+	LevelInfo = zerolog.InfoLevel.String()
 
-	// LogLevelDebug represents log level 0.
-	LogLevelDebug = zerolog.DebugLevel.String()
+	// LevelDebug represents log level 0.
+	LevelDebug = zerolog.DebugLevel.String()
 
-	// LogLevelTrace represents log level -1.
-	LogLevelTrace = zerolog.TraceLevel.String()
+	// LevelTrace represents log level -1.
+	LevelTrace = zerolog.TraceLevel.String()
 
 	stderrLogger zerolog.Logger
 	stdoutLogger zerolog.Logger
@@ -39,19 +39,19 @@ func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	switch config.Get().AppLogLevel {
-	case LogLevelPanic:
+	case LevelPanic:
 		zerolog.SetGlobalLevel(zerolog.PanicLevel)
-	case LogLevelFatal:
+	case LevelFatal:
 		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case LogLevelError:
+	case LevelError:
 		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case LogLevelWarn:
+	case LevelWarn:
 		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case LogLevelInfo:
+	case LevelInfo:
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case LogLevelDebug:
+	case LevelDebug:
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case LogLevelTrace:
+	case LevelTrace:
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	}
 
