@@ -79,5 +79,5 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 
 // Error prints error logs to Stderr.
 func Error(err error) {
-	stderrLogger.Fatal().Err(err)
+	stderrLogger.Error().Err(err)
 }
