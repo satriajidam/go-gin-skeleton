@@ -16,37 +16,23 @@ type Config struct {
 	// - info (zerolog.InfoLevel, 1)
 	// - debug (zerolog.DebugLevel, 0)
 	// - trace (zerolog.TraceLevel, -1)
-	LogLevel string `envconfig:"LOG_LEVEL" default:"debug"`
+	AppLogLevel string `envconfig:"APP_LOG_LEVEL" default:"debug"`
 
 	// Gin framework specific configs.
 	GinMode string `envconfig:"GIN_MODE" default:"release"`
 
 	// Gorm ORM specific configs.
-	GormEnableLog    bool `envconfig:"GORM_ENABLE_LOG" default:"false"`
-	GormMaxIdleConns int  `envconfig:"GORM_MAX_IDLE_CONNS" default:"0"`
-	GormMaxOpenConns int  `envconfig:"GORM_MAX_OPEN_CONNS" default:"0"`
+	GormEnableLog     bool `envconfig:"GORM_ENABLE_LOG" default:"false"`
+	GormMaxIdleConns  int  `envconfig:"GORM_MAX_IDLE_CONNS" default:"0"`
+	GormMaxOpenConns  int  `envconfig:"GORM_MAX_OPEN_CONNS" default:"0"`
+	GormSingularTable bool `envconfig:"GORM_SINGULAR_TABLE" default:"false"`
 
 	// Server port configurations.
 	HTTPPort       string `envconfig:"HTTP_PORT" default:"80"`
 	GRPCPort       string `envconfig:"GRPC_PORT" default:"9090"`
 	PrometheusPort string `envconfig:"PROMETHEUS_PORT" default:"9180"`
 
-	// Gorm SQL database configurations.
-	// Available database modes for Gorm are:
-	// - sqlite3
-	// - mysql
-	// - postgres
-	// - mssql
-	DBMode   string `envconfig:"db_mode" default:"mysql"`
-	DBHost   string `envconfig:"db_host" default:"127.0.0.1"`
-	DBPort   string `envconfig:"db_port" default:"3306"`
-	DBUser   string `envconfig:"db_user" default:""`
-	DBPass   string `envconfig:"db_pass" default:""`
-	DBName   string `envconfig:"db_name" default:""`
-	DBParams string `envconfig:"db_params" default:""`
-
 	// MySQL database configurations.
-	MySQLEnable   bool   `envconfig:"MYSQL_ENABLE" default:"false"`
 	MySQLHost     string `envconfig:"MYSQL_HOST" default:"127.0.0.1"`
 	MySQLPort     string `envconfig:"MYSQL_PORT" default:"3306"`
 	MySQLUsername string `envconfig:"MYSQL_USERNAME" default:""`
@@ -56,7 +42,6 @@ type Config struct {
 	MySQLParams string `envconfig:"MYSQL_PARAMS" default:"charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local"`
 
 	// PostgreSQL database configurations.
-	PostgresEnable   bool   `envconfig:"POSTGRES_ENABLE" default:"false"`
 	PostgresHost     string `envconfig:"POSTGRES_HOST" default:"127.0.0.1"`
 	PostgresPort     string `envconfig:"POSTGRES_PORT" default:"5432"`
 	PostgresUsername string `envconfig:"POSTGRES_USERNAME" default:""`
@@ -64,6 +49,15 @@ type Config struct {
 	PostgresDatabase string `envconfig:"POSTGRES_DATABASE" default:""`
 	// List of accepted PostgreSQL parameters: https://godoc.org/github.com/lib/pq#hdr-Connection_String_Parameters
 	PostgresParams string `envocnfig:"POSTGRES_PARAMS" default:"sslmode=require&fallback_application_name=gin"`
+
+	// Microsoft SQL Server database configurations.
+	MSSQLHost     string `envconfig:"MSSQL_HOST" default:"127.0.0.1"`
+	MSSQLPort     string `envconfig:"MSSQL_PORT" default:"1433"`
+	MSSQLUsername string `envconfig:"MSSQL_USERNAME" default:""`
+	MSSQLPassword string `envconfig:"MSSQL_PASSWORD" default:""`
+	MSSQLDatabase string `envconfig:"MSSQL_DATABASE" default:""`
+	// List of accepted Microsoft SQL Server parameters: https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
+	MSSQLParams string `envocnfig:"MSSQL_PARAMS" default:"encrypt=true&app+name=gin"`
 }
 
 // Get ...
