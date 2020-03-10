@@ -61,17 +61,21 @@ func init() {
 
 func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	output := zerolog.ConsoleWriter{Out: out}
+
 	output.FormatLevel = func(i interface{}) string {
 		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
 	}
+
 	output.FormatMessage = func(i interface{}) string {
-		return fmt.Sprintf("%s", i)
+		return fmt.Sprintf("message=\"%s\"", i)
 	}
+
 	output.FormatFieldName = func(i interface{}) string {
 		return fmt.Sprintf("%s=", i)
 	}
+
 	output.FormatFieldValue = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("%s", i))
+		return strings.ToUpper(fmt.Sprintf("\"%s\"", i))
 	}
 
 	return output
