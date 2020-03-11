@@ -86,6 +86,11 @@ func Panic(err error, msg string) {
 	stderrLogger.Panic().Err(err).Msg(msg)
 }
 
+// Fatal prints fatal level logs to Stderr.
+func Fatal(err error, msg string) {
+	stderrLogger.Fatal().Err(err).Msg(msg)
+}
+
 // Error prints error level logs to Stderr.
 func Error(err error, msg string) {
 	stderrLogger.Error().Err(err).Msg(msg)
