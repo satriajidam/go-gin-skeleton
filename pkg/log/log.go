@@ -81,7 +81,12 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	return output
 }
 
-// Error prints error logs to Stderr.
-func Error(err error) {
-	stderrLogger.Error().Err(err)
+// Panic prints panic level logs to Stderr.
+func Panic(err error, msg string) {
+	stderrLogger.Panic().Err(err).Msg(msg)
+}
+
+// Error prints error level logs to Stderr.
+func Error(err error, msg string) {
+	stderrLogger.Error().Err(err).Msg(msg)
 }

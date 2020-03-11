@@ -6,6 +6,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+
+	// Import MySQL driver.
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 // Config stores MySQL database configurations.
@@ -20,6 +23,9 @@ type Config struct {
 	MaxOpenConns  int
 	SingularTable bool
 }
+
+// Engine sets to MySQL.
+const Engine = "mysql"
 
 var cfg *Config
 
@@ -49,7 +55,7 @@ func DB() (*gorm.DB, error) {
 		cfg.Params,
 	)
 
-	db, err := gorm.Open("mysql", dsn)
+	db, err := gorm.Open(Engine, dsn)
 	if err != nil {
 		return nil, err
 	}

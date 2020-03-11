@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/mysql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
@@ -8,8 +10,8 @@ import (
 func main() {
 	db, err := mysql.DB()
 	if err != nil {
-		db.Close()
-		log.Error(err)
-		panic(err)
+		log.Panic(err, fmt.Sprintf("failed connecting to %s database", mysql.Engine))
 	}
+
+	defer db.Close()
 }
