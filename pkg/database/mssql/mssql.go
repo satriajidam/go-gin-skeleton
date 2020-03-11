@@ -6,6 +6,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+
+	// Import Microsoft SQL Server driver.
+	_ "github.com/jinzhu/gorm/dialects/mssql"
 )
 
 // Config stores Microsoft SQL Server database configurations.
@@ -20,6 +23,9 @@ type Config struct {
 	MaxOpenConns  int
 	SingularTable bool
 }
+
+// Engine sets to Microsoft SQL Server.
+const Engine = "mssql"
 
 var cfg *Config
 
@@ -49,7 +55,7 @@ func DB() (*gorm.DB, error) {
 		cfg.Params,
 	)
 
-	db, err := gorm.Open("mssql", dsn)
+	db, err := gorm.Open(Engine, dsn)
 	if err != nil {
 		return nil, err
 	}

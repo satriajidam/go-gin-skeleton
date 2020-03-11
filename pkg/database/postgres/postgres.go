@@ -6,6 +6,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+
+	// Import PostgreSQL driver.
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 // Config stores PostgreSQL database configurations.
@@ -20,6 +23,9 @@ type Config struct {
 	MaxOpenConns  int
 	SingularTable bool
 }
+
+// Engine sets to PostgreSQL.
+const Engine = "postgres"
 
 var cfg *Config
 
@@ -49,7 +55,7 @@ func DB() (*gorm.DB, error) {
 		cfg.Params,
 	)
 
-	db, err := gorm.Open("postgres", dsn)
+	db, err := gorm.Open(Engine, dsn)
 	if err != nil {
 		return nil, err
 	}
