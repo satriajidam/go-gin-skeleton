@@ -21,7 +21,8 @@ type Config struct {
 	AppMode string `envconfig:"APP_MODE" default:"debug"`
 
 	// Gin framework specific configs.
-	GinMode string `envconfig:"GIN_MODE" default:"release"`
+	GinMode                      string `envconfig:"GIN_MODE" default:"debug"`
+	GinDisallowUnknownJSONFields bool   `envconfig:"GIN_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
 
 	// Gorm ORM specific configs.
 	GormEnableLog     bool `envconfig:"GORM_ENABLE_LOG" default:"false"`
