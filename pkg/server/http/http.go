@@ -12,7 +12,7 @@ type Server struct {
 }
 
 // New creates new HTTP server.
-func New(appMode string, disallowUnknownJSONFields bool) {
+func New(appMode string, disallowUnknownJSONFields bool) *Server {
 	if appMode == gin.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	}

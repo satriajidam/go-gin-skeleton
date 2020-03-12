@@ -21,7 +21,7 @@ var (
 	singleton *logger
 )
 
-func init() {
+func logHandler() *logger {
 	once.Do(func() {
 		singleton = &logger{
 			stderrLogger: zerolog.New(formatConsoleWriter(os.Stderr)).
@@ -34,6 +34,8 @@ func init() {
 				Logger(),
 		}
 	})
+
+	return singleton
 }
 
 func getLogLevel(appMode string) zerolog.Level {
@@ -74,15 +76,15 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 
 // Panic prints panic level logs to Stderr.
 func Panic(err error, msg string) {
-	singleton.stderrLogger.Panic().Timestamp().Err(err).Msg(msg)
+	logHandler().stderrLogger.Panic().Timestamp().Err(err).Msg(msg)
 }
 
 // Fatal prints fatal level logs to Stderr.
 func Fatal(err error, msg string) {
-	singleton.stderrLogger.Fatal().Timestamp().Err(err).Msg(msg)
+	logHandler().stderrLogger.Fatal().Timestamp().Err(err).Msg(msg)
 }
 
 // Error prints error level logs to Stderr.
 func Error(err error, msg string) {
-	singleton.stderrLogger.Error().Timestamp().Err(err).Msg(msg)
+	logHandler().stderrLogger.Error().Timestamp().Err(err).Msg(msg)
 }
