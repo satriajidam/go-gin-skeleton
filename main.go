@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 
-	"github.com/satriajidam/go-gin-skeleton/pkg/database/mysql"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/postgres"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
 func main() {
-	db, err := mysql.DB()
+	dbengine := postgres.Init()
+	dbconn, err := database.Connect(dbengine)
 	if err != nil {
-		log.Panic(err, fmt.Sprintf("failed connecting to %s database", mysql.Engine))
+		log.Panic(err, fmt.Sprintf("failed connecting to %s database", dbengine.GetName()))
 	}
 
-	defer db.Close()
+	defer dbconn.Close()
 }

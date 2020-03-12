@@ -5,13 +5,14 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database"
 
 	// Import Microsoft SQL Server driver.
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 )
 
-// Config stores Microsoft SQL Server database configurations.
-type Config struct {
+// mssql stores Microsoft SQL Server database configurations.
+type mssql struct {
 	Host          string
 	Port          string
 	Username      string
@@ -23,13 +24,9 @@ type Config struct {
 	SingularTable bool
 }
 
-// Engine sets to Microsoft SQL Server.
-const Engine = "mssql"
-
-var cfg *Config
-
-func init() {
-	cfg = &Config{
+// Init initializes Microsoft SQL Server database engine.
+func Init() database.DBEngine {
+	return &mssql{
 		Host:          config.Get().PostgresHost,
 		Port:          config.Get().PostgresPort,
 		Username:      config.Get().PostgresUsername,
@@ -42,35 +39,40 @@ func init() {
 	}
 }
 
-// DB returns Microsoft SQL Server database connection.
-func DB() (*gorm.DB, error) {
+// GetName returns Microsoft SQL Server database engine name.
+func (db *mssql) GetName() string {
+	return "mssql"
+}
+
+// Connect initiates connection to a Microsoft SQL Server database.
+func (db *mssql) Connect() (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"sqlserver://%s:%s@%s:%s?database=%s&%s",
-		cfg.Username,
-		cfg.Password,
-		cfg.Host,
-		cfg.Port,
-		cfg.Database,
-		cfg.Params,
+		db.Username,
+		db.Password,
+		db.Host,
+		db.Port,
+		db.Database,
+		db.Params,
 	)
 
-	db, err := gorm.Open(Engine, dsn)
+	dbconn, err := gorm.Open(db.GetName(), dsn)
 	if err != nil {
 		return nil, err
 	}
 
 	switch config.Get().AppMode {
 	case config.ReleaseMode:
-		db.LogMode(false)
+		dbconn.LogMode(false)
 	case config.DebugMode:
 	default:
-		db.LogMode(true)
+		dbconn.LogMode(true)
 	}
 
-	db.DB().SetMaxIdleConns(cfg.MaxIdleConns)
-	db.DB().SetMaxOpenConns(cfg.MaxOpenConns)
+	dbconn.DB().SetMaxIdleConns(db.MaxIdleConns)
+	dbconn.DB().SetMaxOpenConns(db.MaxOpenConns)
 
-	db.SingularTable(cfg.SingularTable)
+	dbconn.SingularTable(db.SingularTable)
 
-	return db, nil
+	return dbconn, nil
 }
