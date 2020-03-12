@@ -2,6 +2,13 @@ package config
 
 import "github.com/kelseyhightower/envconfig"
 
+const (
+	// ReleaseMode is a mode for application in release state.
+	ReleaseMode = "release"
+	// DebugMode is a mode for application in debug state.
+	DebugMode = "debug"
+)
+
 // Config ...
 type Config struct {
 	// The name of this application.
@@ -9,14 +16,9 @@ type Config struct {
 
 	// Available levels are based on https://github.com/rs/zerolog#leveled-logging.
 	// zerolog allows for logging at the following levels (from highest to lowest):
-	// - panic (zerolog.PanicLevel, 5)
-	// - fatal (zerolog.FatalLevel, 4)
-	// - error (zerolog.ErrorLevel, 3)
-	// - warn (zerolog.WarnLevel, 2)
-	// - info (zerolog.InfoLevel, 1)
-	// - debug (zerolog.DebugLevel, 0)
-	// - trace (zerolog.TraceLevel, -1)
-	AppLogLevel string `envconfig:"APP_LOG_LEVEL" default:"debug"`
+	// - release
+	// - debug
+	AppMode string `envconfig:"APP_MODE" default:"debug"`
 
 	// Gin framework specific configs.
 	GinMode string `envconfig:"GIN_MODE" default:"release"`

@@ -5,7 +5,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
-	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 
 	// Import MySQL driver.
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -60,12 +59,12 @@ func DB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	logLevel := config.Get().AppLogLevel
-
-	if logLevel == log.LevelDebug || logLevel == log.LevelTrace {
-		db.LogMode(true)
-	} else {
+	switch config.Get().AppMode {
+	case config.ReleaseMode:
 		db.LogMode(false)
+	case config.DebugMode:
+	default:
+		db.LogMode(true)
 	}
 
 	db.DB().SetMaxIdleConns(cfg.MaxIdleConns)

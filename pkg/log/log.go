@@ -4,63 +4,54 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 )
 
-var (
-	// LevelPanic represents log level 5.
-	LevelPanic = zerolog.PanicLevel.String()
-
-	// LevelFatal represents log level 4.
-	LevelFatal = zerolog.FatalLevel.String()
-
-	// LevelError represents log level 3.
-	LevelError = zerolog.ErrorLevel.String()
-
-	// LevelWarn represents log level 2.
-	LevelWarn = zerolog.WarnLevel.String()
-
-	// LevelInfo represents log level 1.
-	LevelInfo = zerolog.InfoLevel.String()
-
-	// LevelDebug represents log level 0.
-	LevelDebug = zerolog.DebugLevel.String()
-
-	// LevelTrace represents log level -1.
-	LevelTrace = zerolog.TraceLevel.String()
-
+type logger struct {
 	stderrLogger zerolog.Logger
 	stdoutLogger zerolog.Logger
+}
+
+var (
+	once      sync.Once
+	singleton *logger
 )
 
 func init() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	once.Do(func() {
+		singleton = &logger{
+			stderrLogger: zerolog.New(formatConsoleWriter(os.Stderr)).
+				Level(getLogLevel(config.Get().AppMode)).
+				With().
+				Logger(),
+			stdoutLogger: zerolog.New(formatConsoleWriter(os.Stdout)).
+				Level(getLogLevel(config.Get().AppMode)).
+				With().
+				Logger(),
+		}
+	})
+}
 
-	switch config.Get().AppLogLevel {
-	case LevelPanic:
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
-	case LevelFatal:
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case LevelError:
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case LevelWarn:
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case LevelInfo:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case LevelDebug:
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case LevelTrace:
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+func getLogLevel(appMode string) zerolog.Level {
+	var level zerolog.Level
+
+	switch appMode {
+	case config.ReleaseMode:
+		level = zerolog.InfoLevel
+	case config.DebugMode:
+	default:
+		level = zerolog.DebugLevel
 	}
 
-	stderrLogger = zerolog.New(formatConsoleWriter(os.Stderr)).With().Timestamp().Logger()
-	stdoutLogger = zerolog.New(formatConsoleWriter(os.Stdout)).With().Timestamp().Logger()
+	return level
 }
 
 func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
-	output := zerolog.ConsoleWriter{Out: out}
+	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
 
 	output.FormatLevel = func(i interface{}) string {
 		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
@@ -83,15 +74,15 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 
 // Panic prints panic level logs to Stderr.
 func Panic(err error, msg string) {
-	stderrLogger.Panic().Err(err).Msg(msg)
+	singleton.stderrLogger.Panic().Timestamp().Err(err).Msg(msg)
 }
 
 // Fatal prints fatal level logs to Stderr.
 func Fatal(err error, msg string) {
-	stderrLogger.Fatal().Err(err).Msg(msg)
+	singleton.stderrLogger.Fatal().Timestamp().Err(err).Msg(msg)
 }
 
 // Error prints error level logs to Stderr.
 func Error(err error, msg string) {
-	stderrLogger.Error().Err(err).Msg(msg)
+	singleton.stderrLogger.Error().Timestamp().Err(err).Msg(msg)
 }
