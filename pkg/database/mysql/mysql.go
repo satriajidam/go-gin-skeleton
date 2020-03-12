@@ -5,69 +5,33 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
-	"github.com/satriajidam/go-gin-skeleton/pkg/database"
 
 	// Import MySQL driver.
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-// mysql stores MySQL database configurations.
-type mysql struct {
-	Host          string
-	Port          string
-	Username      string
-	Password      string
-	Database      string
-	Params        string
-	MaxIdleConns  int
-	MaxOpenConns  int
-	SingularTable bool
-	LogMode       bool
-}
-
-// Init initializes MySQL database engine.
-func Init(cfg *config.Config) database.DBEngine {
-	return &mysql{
-		Host:          cfg.MySQLHost,
-		Port:          cfg.MySQLPort,
-		Username:      cfg.MySQLUsername,
-		Password:      cfg.MySQLPassword,
-		Database:      cfg.MySQLPassword,
-		Params:        cfg.MySQLParams,
-		MaxIdleConns:  cfg.GormMaxIdleConns,
-		MaxOpenConns:  cfg.GormMaxOpenConns,
-		SingularTable: cfg.GormSingularTable,
-		LogMode:       cfg.IsDebugMode(),
-	}
-}
-
-// GetName returns MySQL database engine name.
-func (db *mysql) GetName() string {
-	return "mysql"
-}
-
 // Connect initiates connection to a MysQL database.
-func (db *mysql) Connect() (*gorm.DB, error) {
+func Connect(cfg *config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?%s",
-		db.Username,
-		db.Password,
-		db.Host,
-		db.Port,
-		db.Database,
-		db.Params,
+		cfg.MySQLUsername,
+		cfg.MySQLPassword,
+		cfg.MySQLHost,
+		cfg.MySQLPort,
+		cfg.MySQLDatabase,
+		cfg.MySQLParams,
 	)
 
-	dbconn, err := gorm.Open(db.GetName(), dsn)
+	dbconn, err := gorm.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	dbconn.DB().SetMaxIdleConns(db.MaxIdleConns)
-	dbconn.DB().SetMaxOpenConns(db.MaxOpenConns)
+	dbconn.DB().SetMaxIdleConns(cfg.GormMaxIdleConns)
+	dbconn.DB().SetMaxOpenConns(cfg.GormMaxOpenConns)
 
-	dbconn.SingularTable(db.SingularTable)
-	dbconn.LogMode(db.LogMode)
+	dbconn.SingularTable(cfg.GormSingularTable)
+	dbconn.LogMode(cfg.IsDebugMode())
 
 	return dbconn, nil
 }
