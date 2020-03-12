@@ -22,20 +22,22 @@ type mysql struct {
 	MaxIdleConns  int
 	MaxOpenConns  int
 	SingularTable bool
+	LogMode       bool
 }
 
 // Init initializes MySQL database engine.
-func Init() database.DBEngine {
+func Init(cfg *config.Config) database.DBEngine {
 	return &mysql{
-		Host:          config.Get().MySQLHost,
-		Port:          config.Get().MySQLPort,
-		Username:      config.Get().MySQLUsername,
-		Password:      config.Get().MySQLPassword,
-		Database:      config.Get().MySQLPassword,
-		Params:        config.Get().MySQLParams,
-		MaxIdleConns:  config.Get().GormMaxIdleConns,
-		MaxOpenConns:  config.Get().GormMaxOpenConns,
-		SingularTable: config.Get().GormSingularTable,
+		Host:          cfg.MySQLHost,
+		Port:          cfg.MySQLPort,
+		Username:      cfg.MySQLUsername,
+		Password:      cfg.MySQLPassword,
+		Database:      cfg.MySQLPassword,
+		Params:        cfg.MySQLParams,
+		MaxIdleConns:  cfg.GormMaxIdleConns,
+		MaxOpenConns:  cfg.GormMaxOpenConns,
+		SingularTable: cfg.GormSingularTable,
+		LogMode:       cfg.IsDebugMode(),
 	}
 }
 
@@ -61,18 +63,11 @@ func (db *mysql) Connect() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	switch config.Get().AppMode {
-	case config.ReleaseMode:
-		dbconn.LogMode(false)
-	case config.DebugMode:
-	default:
-		dbconn.LogMode(true)
-	}
-
 	dbconn.DB().SetMaxIdleConns(db.MaxIdleConns)
 	dbconn.DB().SetMaxOpenConns(db.MaxOpenConns)
 
 	dbconn.SingularTable(db.SingularTable)
+	dbconn.LogMode(db.LogMode)
 
 	return dbconn, nil
 }

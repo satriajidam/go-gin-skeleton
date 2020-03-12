@@ -22,20 +22,22 @@ type mssql struct {
 	MaxIdleConns  int
 	MaxOpenConns  int
 	SingularTable bool
+	LogMode       bool
 }
 
 // Init initializes Microsoft SQL Server database engine.
-func Init() database.DBEngine {
+func Init(cfg *config.Config) database.DBEngine {
 	return &mssql{
-		Host:          config.Get().PostgresHost,
-		Port:          config.Get().PostgresPort,
-		Username:      config.Get().PostgresUsername,
-		Password:      config.Get().PostgresPassword,
-		Database:      config.Get().PostgresDatabase,
-		Params:        config.Get().PostgresParams,
-		MaxIdleConns:  config.Get().GormMaxIdleConns,
-		MaxOpenConns:  config.Get().GormMaxOpenConns,
-		SingularTable: config.Get().GormSingularTable,
+		Host:          cfg.PostgresHost,
+		Port:          cfg.PostgresPort,
+		Username:      cfg.PostgresUsername,
+		Password:      cfg.PostgresPassword,
+		Database:      cfg.PostgresDatabase,
+		Params:        cfg.PostgresParams,
+		MaxIdleConns:  cfg.GormMaxIdleConns,
+		MaxOpenConns:  cfg.GormMaxOpenConns,
+		SingularTable: cfg.GormSingularTable,
+		LogMode:       cfg.IsDebugMode(),
 	}
 }
 
@@ -61,18 +63,11 @@ func (db *mssql) Connect() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	switch config.Get().AppMode {
-	case config.ReleaseMode:
-		dbconn.LogMode(false)
-	case config.DebugMode:
-	default:
-		dbconn.LogMode(true)
-	}
-
 	dbconn.DB().SetMaxIdleConns(db.MaxIdleConns)
 	dbconn.DB().SetMaxOpenConns(db.MaxOpenConns)
 
 	dbconn.SingularTable(db.SingularTable)
+	dbconn.LogMode(db.LogMode)
 
 	return dbconn, nil
 }

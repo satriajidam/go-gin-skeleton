@@ -1,15 +1,12 @@
 package config
 
-import "github.com/kelseyhightower/envconfig"
+import (
+	"sync"
 
-const (
-	// ReleaseMode is a mode for application in release state.
-	ReleaseMode = "release"
-	// DebugMode is a mode for application in debug state.
-	DebugMode = "debug"
+	"github.com/kelseyhightower/envconfig"
 )
 
-// Config ...
+// Config stores application's configurations.
 type Config struct {
 	// The name of this application.
 	AppName string `envconfig:"APP_NAME" default:"gin"`
@@ -63,9 +60,32 @@ type Config struct {
 	MSSQLParams string `envocnfig:"MSSQL_PARAMS" default:"encrypt=true&app+name=gin"`
 }
 
-// Get ...
-func Get() Config {
-	config := Config{}
-	envconfig.MustProcess("", &config)
-	return config
+var (
+	once      sync.Once
+	singleton *Config
+)
+
+const (
+	releaseMode = "release"
+	debugMode   = "debug"
+)
+
+// Init initializes application's configurations.
+func Init() *Config {
+	once.Do(func() {
+		singleton = &Config{}
+		envconfig.MustProcess("", singleton)
+	})
+
+	return singleton
+}
+
+// IsReleaseMode checks if application is running in release mode.
+func (c *Config) IsReleaseMode() bool {
+	return c.AppMode == releaseMode
+}
+
+// IsDebugMode checks if application is running in debug mode.
+func (c *Config) IsDebugMode() bool {
+	return c.AppMode == debugMode
 }

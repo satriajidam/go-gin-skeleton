@@ -21,35 +21,28 @@ var (
 	singleton *logger
 )
 
-func logHandler() *logger {
+func init() {
 	once.Do(func() {
+		config := config.Init()
 		singleton = &logger{
 			stderrLogger: zerolog.New(formatConsoleWriter(os.Stderr)).
-				Level(getLogLevel(config.Get().AppMode)).
+				Level(setLogLevel(config)).
 				With().
 				Logger(),
 			stdoutLogger: zerolog.New(formatConsoleWriter(os.Stdout)).
-				Level(getLogLevel(config.Get().AppMode)).
+				Level(setLogLevel(config)).
 				With().
 				Logger(),
 		}
 	})
-
-	return singleton
 }
 
-func getLogLevel(appMode string) zerolog.Level {
-	var level zerolog.Level
-
-	switch appMode {
-	case config.ReleaseMode:
-		level = zerolog.InfoLevel
-	case config.DebugMode:
-	default:
-		level = zerolog.DebugLevel
+func setLogLevel(cfg *config.Config) zerolog.Level {
+	if cfg.IsReleaseMode() {
+		return zerolog.InfoLevel
 	}
 
-	return level
+	return zerolog.DebugLevel
 }
 
 func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
@@ -76,15 +69,30 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 
 // Panic prints panic level logs to Stderr.
 func Panic(err error, msg string) {
-	logHandler().stderrLogger.Panic().Timestamp().Err(err).Msg(msg)
+	singleton.stderrLogger.Panic().Timestamp().Err(err).Msg(msg)
 }
 
 // Fatal prints fatal level logs to Stderr.
 func Fatal(err error, msg string) {
-	logHandler().stderrLogger.Fatal().Timestamp().Err(err).Msg(msg)
+	singleton.stderrLogger.Fatal().Timestamp().Err(err).Msg(msg)
 }
 
 // Error prints error level logs to Stderr.
 func Error(err error, msg string) {
-	logHandler().stderrLogger.Error().Timestamp().Err(err).Msg(msg)
+	singleton.stderrLogger.Error().Timestamp().Err(err).Msg(msg)
+}
+
+// Warn prints warn level logs to Stdout.s
+func Warn(msg string) {
+	singleton.stdoutLogger.Warn().Timestamp().Msg(msg)
+}
+
+// Info prints info level logs to Stdout.
+func Info(msg string) {
+	singleton.stdoutLogger.Info().Timestamp().Msg(msg)
+}
+
+// Debug prints debug level logs to Stdout.
+func Debug(msg string) {
+	singleton.stdoutLogger.Debug().Timestamp().Msg(msg)
 }
