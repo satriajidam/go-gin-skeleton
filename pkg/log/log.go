@@ -12,8 +12,8 @@ import (
 )
 
 type logger struct {
-	stderrLogger zerolog.Logger
-	stdoutLogger zerolog.Logger
+	stderr zerolog.Logger
+	stdout zerolog.Logger
 }
 
 var (
@@ -23,26 +23,32 @@ var (
 
 func init() {
 	once.Do(func() {
-		config := config.Init()
-		singleton = &logger{
-			stderrLogger: zerolog.New(formatConsoleWriter(os.Stderr)).
-				Level(setLogLevel(config)).
-				With().
-				Logger(),
-			stdoutLogger: zerolog.New(formatConsoleWriter(os.Stdout)).
-				Level(setLogLevel(config)).
-				With().
-				Logger(),
+		if config.IsDebugMode() {
+			singleton = &logger{
+				stderr: zerolog.New(formatConsoleWriter(os.Stderr)).
+					Level(zerolog.DebugLevel).
+					With().
+					Caller().
+					Logger(),
+				stdout: zerolog.New(formatConsoleWriter(os.Stdout)).
+					Level(zerolog.DebugLevel).
+					With().
+					Caller().
+					Logger(),
+			}
+		} else {
+			singleton = &logger{
+				stderr: zerolog.New(formatConsoleWriter(os.Stderr)).
+					Level(zerolog.InfoLevel).
+					With().
+					Logger(),
+				stdout: zerolog.New(formatConsoleWriter(os.Stdout)).
+					Level(zerolog.InfoLevel).
+					With().
+					Logger(),
+			}
 		}
 	})
-}
-
-func setLogLevel(cfg *config.Config) zerolog.Level {
-	if cfg.IsReleaseMode() {
-		return zerolog.InfoLevel
-	}
-
-	return zerolog.DebugLevel
 }
 
 func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
@@ -69,30 +75,30 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 
 // Panic prints panic level logs to Stderr.
 func Panic(err error, msg string) {
-	singleton.stderrLogger.Panic().Timestamp().Err(err).Msg(msg)
+	singleton.stderr.Panic().Timestamp().Err(err).Msg(msg)
 }
 
 // Fatal prints fatal level logs to Stderr.
 func Fatal(err error, msg string) {
-	singleton.stderrLogger.Fatal().Timestamp().Err(err).Msg(msg)
+	singleton.stderr.Fatal().Timestamp().Err(err).Msg(msg)
 }
 
 // Error prints error level logs to Stderr.
 func Error(err error, msg string) {
-	singleton.stderrLogger.Error().Timestamp().Err(err).Msg(msg)
+	singleton.stderr.Error().Timestamp().Err(err).Msg(msg)
 }
 
 // Warn prints warn level logs to Stdout.s
 func Warn(msg string) {
-	singleton.stdoutLogger.Warn().Timestamp().Msg(msg)
+	singleton.stdout.Warn().Timestamp().Msg(msg)
 }
 
 // Info prints info level logs to Stdout.
 func Info(msg string) {
-	singleton.stdoutLogger.Info().Timestamp().Msg(msg)
+	singleton.stdout.Info().Timestamp().Msg(msg)
 }
 
 // Debug prints debug level logs to Stdout.
 func Debug(msg string) {
-	singleton.stdoutLogger.Debug().Timestamp().Msg(msg)
+	singleton.stdout.Debug().Timestamp().Msg(msg)
 }

@@ -11,15 +11,15 @@ import (
 )
 
 // Connect initiates connection to a MysQL database.
-func Connect(cfg *config.Config) (*gorm.DB, error) {
+func Connect() (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?%s",
-		cfg.MySQLUsername,
-		cfg.MySQLPassword,
-		cfg.MySQLHost,
-		cfg.MySQLPort,
-		cfg.MySQLDatabase,
-		cfg.MySQLParams,
+		config.Get().MySQLUsername,
+		config.Get().MySQLPassword,
+		config.Get().MySQLHost,
+		config.Get().MySQLPort,
+		config.Get().MySQLDatabase,
+		config.Get().MySQLParams,
 	)
 
 	dbconn, err := gorm.Open("mysql", dsn)
@@ -27,11 +27,11 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	dbconn.DB().SetMaxIdleConns(cfg.GormMaxIdleConns)
-	dbconn.DB().SetMaxOpenConns(cfg.GormMaxOpenConns)
+	dbconn.DB().SetMaxIdleConns(config.Get().GormMaxIdleConns)
+	dbconn.DB().SetMaxOpenConns(config.Get().GormMaxOpenConns)
 
-	dbconn.SingularTable(cfg.GormSingularTable)
-	dbconn.LogMode(cfg.IsDebugMode())
+	dbconn.SingularTable(config.Get().GormSingularTable)
+	dbconn.LogMode(config.IsDebugMode())
 
 	return dbconn, nil
 }

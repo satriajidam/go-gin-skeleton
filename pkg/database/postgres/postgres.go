@@ -11,15 +11,15 @@ import (
 )
 
 // Connect initiates connection to a PostgreSQL database.
-func Connect(cfg *config.Config) (*gorm.DB, error) {
+func Connect() (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?%s",
-		cfg.PostgresUsername,
-		cfg.PostgresPassword,
-		cfg.PostgresHost,
-		cfg.PostgresPort,
-		cfg.PostgresDatabase,
-		cfg.PostgresParams,
+		config.Get().PostgresUsername,
+		config.Get().PostgresPassword,
+		config.Get().PostgresHost,
+		config.Get().PostgresPort,
+		config.Get().PostgresDatabase,
+		config.Get().PostgresParams,
 	)
 
 	dbconn, err := gorm.Open("postgres", dsn)
@@ -27,11 +27,11 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	dbconn.DB().SetMaxIdleConns(cfg.GormMaxIdleConns)
-	dbconn.DB().SetMaxOpenConns(cfg.GormMaxOpenConns)
+	dbconn.DB().SetMaxIdleConns(config.Get().GormMaxIdleConns)
+	dbconn.DB().SetMaxOpenConns(config.Get().GormMaxOpenConns)
 
-	dbconn.SingularTable(cfg.GormSingularTable)
-	dbconn.LogMode(cfg.IsDebugMode())
+	dbconn.SingularTable(config.Get().GormSingularTable)
+	dbconn.LogMode(config.IsDebugMode())
 
 	return dbconn, nil
 }

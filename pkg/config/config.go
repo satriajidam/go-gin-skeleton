@@ -58,6 +58,9 @@ type Config struct {
 	MSSQLDatabase string `envconfig:"MSSQL_DATABASE" default:""`
 	// List of accepted Microsoft SQL Server parameters: https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 	MSSQLParams string `envocnfig:"MSSQL_PARAMS" default:"encrypt=true&app+name=gin"`
+
+	// SQLite database configurations.
+	SQLiteDatabase string `envconfig:"SQLITE_DATABASE" default:":memory:"`
 }
 
 var (
@@ -70,8 +73,8 @@ const (
 	debugMode   = "debug"
 )
 
-// Init initializes application's configurations.
-func Init() *Config {
+// Get retrieves singleton object of application configurations.
+func Get() *Config {
 	once.Do(func() {
 		singleton = &Config{}
 		envconfig.MustProcess("", singleton)
@@ -81,11 +84,11 @@ func Init() *Config {
 }
 
 // IsReleaseMode checks if application is running in release mode.
-func (c *Config) IsReleaseMode() bool {
-	return c.AppMode == releaseMode
+func IsReleaseMode() bool {
+	return Get().AppMode == releaseMode
 }
 
 // IsDebugMode checks if application is running in debug mode.
-func (c *Config) IsDebugMode() bool {
-	return c.AppMode == debugMode
+func IsDebugMode() bool {
+	return Get().AppMode == debugMode
 }
