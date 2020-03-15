@@ -79,7 +79,7 @@ func Error(err error, msg string) {
 	singleton.stderr.Error().Timestamp().Err(err).Msg(msg)
 }
 
-// Warn prints warn level logs to Stdout.s
+// Warn prints warn level logs to Stdout.
 func Warn(msg string) {
 	singleton.stdout.Warn().Timestamp().Msg(msg)
 }
