@@ -23,30 +23,21 @@ var (
 
 func init() {
 	once.Do(func() {
-		if config.IsDebugMode() {
-			singleton = &logger{
-				stderr: zerolog.New(formatConsoleWriter(os.Stderr)).
-					Level(zerolog.DebugLevel).
-					With().
-					Caller().
-					Logger(),
-				stdout: zerolog.New(formatConsoleWriter(os.Stdout)).
-					Level(zerolog.DebugLevel).
-					With().
-					Caller().
-					Logger(),
-			}
-		} else {
-			singleton = &logger{
-				stderr: zerolog.New(formatConsoleWriter(os.Stderr)).
-					Level(zerolog.InfoLevel).
-					With().
-					Logger(),
-				stdout: zerolog.New(formatConsoleWriter(os.Stdout)).
-					Level(zerolog.InfoLevel).
-					With().
-					Logger(),
-			}
+		logLevel := zerolog.DebugLevel
+
+		if config.IsReleaseMode() {
+			logLevel = zerolog.InfoLevel
+		}
+
+		singleton = &logger{
+			stderr: zerolog.New(formatConsoleWriter(os.Stderr)).
+				Level(logLevel).
+				With().
+				Logger(),
+			stdout: zerolog.New(formatConsoleWriter(os.Stdout)).
+				Level(logLevel).
+				With().
+				Logger(),
 		}
 	})
 }
