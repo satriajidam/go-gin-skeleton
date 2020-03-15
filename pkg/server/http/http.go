@@ -14,12 +14,12 @@ type Server struct {
 }
 
 // New creates new HTTP server.
-func New(cfg *config.Config) *Server {
-	if cfg.IsReleaseMode() {
+func New() *Server {
+	if config.IsReleaseMode() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	if cfg.GinDisallowUnknownJSONFields {
+	if config.Get().GinDisallowUnknownJSONFields {
 		gin.EnableJsonDecoderDisallowUnknownFields()
 	}
 
@@ -27,7 +27,7 @@ func New(cfg *config.Config) *Server {
 
 	return &Server{
 		Router: router,
-		Port:   cfg.HTTPPort,
+		Port:   config.Get().HTTPPort,
 	}
 }
 

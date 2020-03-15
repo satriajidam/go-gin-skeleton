@@ -1,15 +1,17 @@
 package main
 
 import (
-	"github.com/satriajidam/go-gin-skeleton/pkg/database/sqlite"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/mysql"
+	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 )
 
 func main() {
-	dbconn, err := sqlite.Connect()
+	dbconn, err := mysql.Connect()
 	if err != nil {
-		panic(err)
+		log.Panic(err, "failed connecting to mysql database")
+		// panic(err)
 	}
 
 	defer dbconn.Close()
