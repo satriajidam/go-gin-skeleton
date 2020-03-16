@@ -22,7 +22,7 @@ type Config struct {
 	GinDisallowUnknownJSONFields bool   `envconfig:"GIN_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
 
 	// Gorm ORM specific configs.
-	GormEnableLog     bool `envconfig:"GORM_ENABLE_LOG" default:"false"`
+	GormEnableLog     bool `envconfig:"GORM_ENABLE_LOG" default:"true"`
 	GormMaxIdleConns  int  `envconfig:"GORM_MAX_IDLE_CONNS" default:"0"`
 	GormMaxOpenConns  int  `envconfig:"GORM_MAX_OPEN_CONNS" default:"0"`
 	GormSingularTable bool `envconfig:"GORM_SINGULAR_TABLE" default:"false"`
