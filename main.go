@@ -1,25 +1,22 @@
 package main
 
 import (
-	"github.com/satriajidam/go-gin-skeleton/pkg/database/mysql"
-	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sqlite"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 )
 
 func main() {
-	dbconn, err := mysql.Connect()
+	dbconn, err := sqlite.Connect()
 	if err != nil {
-		log.Panic(err, "failed connecting to mysql database")
-		// panic(err)
+		panic(err)
 	}
 
 	defer dbconn.Close()
 
 	httpServer := http.New()
 
-	err = server.InitServers(httpServer)
-	if err != nil {
+	if err := <-server.StartServers(httpServer); err != nil {
 		panic(err)
 	}
 }

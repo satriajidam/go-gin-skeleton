@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
+	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
 // Server represents the HTTP server object.
@@ -23,7 +24,7 @@ func New() *Server {
 		gin.EnableJsonDecoderDisallowUnknownFields()
 	}
 
-	router := gin.Default()
+	router := gin.New()
 
 	return &Server{
 		Router: router,
@@ -33,5 +34,6 @@ func New() *Server {
 
 // Start starts the HTTP server,
 func (s *Server) Start() error {
+	log.Info(fmt.Sprintf("starting http server on port %s", s.Port))
 	return s.Router.Run(fmt.Sprintf(":%s", s.Port))
 }
