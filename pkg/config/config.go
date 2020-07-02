@@ -17,19 +17,15 @@ type Config struct {
 	// - debug
 	AppMode string `envconfig:"APP_MODE" default:"debug"`
 
-	// Gin framework specific configs.
-	GinMode                      string `envconfig:"GIN_MODE" default:"debug"`
-	GinDisallowUnknownJSONFields bool   `envconfig:"GIN_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
+	// HTTP Server configurations.
+	HTTPServerPort                      string `envconfig:"HTTP_SERVER_PORT" default:"80"`
+	HTTPServerMode                      string `envconfig:"HTTP_SERVER_MODE" default:"debug"`
+	HTTPServerDisallowUnknownJSONFields bool   `envconfig:"HTTP_SERVER_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
 
-	// Gorm ORM specific configs.
-	GormEnableLog     bool `envconfig:"GORM_ENABLE_LOG" default:"true"`
-	GormMaxIdleConns  int  `envconfig:"GORM_MAX_IDLE_CONNS" default:"0"`
-	GormMaxOpenConns  int  `envconfig:"GORM_MAX_OPEN_CONNS" default:"0"`
-	GormSingularTable bool `envconfig:"GORM_SINGULAR_TABLE" default:"false"`
+	// GRPC Server configurations.
+	GRPCPort string `envconfig:"GRPC_PORT" default:"9090"`
 
-	// Server port configurations.
-	HTTPPort       string `envconfig:"HTTP_PORT" default:"80"`
-	GRPCPort       string `envconfig:"GRPC_PORT" default:"9090"`
+	// Prometheus Server configurations.
 	PrometheusPort string `envconfig:"PROMETHEUS_PORT" default:"9180"`
 
 	// MySQL database configurations.
@@ -39,7 +35,11 @@ type Config struct {
 	MySQLPassword string `envconfig:"MYSQL_PASSWORD" default:""`
 	MySQLDatabase string `envconfig:"MYSQL_DATABASE" default:""`
 	// List of accepted MySQL parameters: https://github.com/go-sql-driver/mysql#parameters
-	MySQLParams string `envconfig:"MYSQL_PARAMS" default:"charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local"`
+	MySQLParams        string `envconfig:"MYSQL_PARAMS" default:"charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local"`
+	MySQLDebugMode     bool   `envconfig:"MYSQL_DEBUG_MODE" default:"true"`
+	MySQLMaxIdleConns  int    `envconfig:"MYSQL_MAX_IDLE_CONNS" default:"0"`
+	MySQLMaxOpenConns  int    `envconfig:"MYSQL_MAX_OPEN_CONNS" default:"0"`
+	MySQLSingularTable bool   `envconfig:"MYSQL_SINGULAR_TABLE" default:"false"`
 
 	// PostgreSQL database configurations.
 	PostgresHost     string `envconfig:"POSTGRES_HOST" default:"127.0.0.1"`
@@ -48,7 +48,11 @@ type Config struct {
 	PostgresPassword string `envconfig:"POSTGRES_PASSWORD" default:""`
 	PostgresDatabase string `envconfig:"POSTGRES_DATABASE" default:""`
 	// List of accepted PostgreSQL parameters: https://godoc.org/github.com/lib/pq#hdr-Connection_String_Parameters
-	PostgresParams string `envocnfig:"POSTGRES_PARAMS" default:"sslmode=require&fallback_application_name=gin"`
+	PostgresParams        string `envocnfig:"POSTGRES_PARAMS" default:"sslmode=require&fallback_application_name=gin"`
+	PostgresDebugMode     bool   `envconfig:"POSTGRES_DEBUG_MODE" default:"true"`
+	PostgresMaxIdleConns  int    `envconfig:"POSTGRES_MAX_IDLE_CONNS" default:"0"`
+	PostgresMaxOpenConns  int    `envconfig:"POSTGRES_MAX_OPEN_CONNS" default:"0"`
+	PostgresSingularTable bool   `envconfig:"POSTGRES_SINGULAR_TABLE" default:"false"`
 
 	// Microsoft SQL Server database configurations.
 	MSSQLHost     string `envconfig:"MSSQL_HOST" default:"127.0.0.1"`
@@ -57,10 +61,18 @@ type Config struct {
 	MSSQLPassword string `envconfig:"MSSQL_PASSWORD" default:""`
 	MSSQLDatabase string `envconfig:"MSSQL_DATABASE" default:""`
 	// List of accepted Microsoft SQL Server parameters: https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
-	MSSQLParams string `envocnfig:"MSSQL_PARAMS" default:"encrypt=true&app+name=gin"`
+	MSSQLParams        string `envocnfig:"MSSQL_PARAMS" default:"encrypt=true&app+name=gin"`
+	MSSQLDebugMode     bool   `envconfig:"MSSQL_DEBUG_MODE" default:"true"`
+	MSSQLMaxIdleConns  int    `envconfig:"MSSQL_MAX_IDLE_CONNS" default:"0"`
+	MSSQLMaxOpenConns  int    `envconfig:"MSSQL_MAX_OPEN_CONNS" default:"0"`
+	MSSQLSingularTable bool   `envconfig:"MSSQL_SINGULAR_TABLE" default:"false"`
 
 	// SQLite database configurations.
-	SQLiteDatabase string `envconfig:"SQLITE_DATABASE" default:":memory:"`
+	SQLiteDatabase      string `envconfig:"SQLITE_DATABASE" default:":memory:"`
+	SQLiteDebugMode     bool   `envconfig:"SQLITE_DEBUG_MODE" default:"true"`
+	SQLiteMaxIdleConns  int    `envconfig:"SQLITE_MAX_IDLE_CONNS" default:"0"`
+	SQLiteMaxOpenConns  int    `envconfig:"SQLITE_MAX_OPEN_CONNS" default:"0"`
+	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`
 }
 
 var (
