@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/satriajidam/go-gin-skeleton/pkg/sqldb"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 
 	// Import PostgreSQL driver.
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -12,7 +12,7 @@ import (
 
 // NewConnection initiates new connection to a PostgreSQL database using provided
 // connection configs.
-func NewConnection(conf sqldb.Config) (*gorm.DB, error) {
+func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?%s",
 		conf.Username,

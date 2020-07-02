@@ -2,14 +2,14 @@ package main
 
 import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
-	"github.com/satriajidam/go-gin-skeleton/pkg/sqldb"
-	"github.com/satriajidam/go-gin-skeleton/pkg/sqldb/sqlite"
 )
 
 func main() {
-	dbconn, err := sqlite.NewConnection(sqldb.Config{
+	dbconn, err := sqlite.NewConnection(sql.DBConfig{
 		Database:      config.Get().SQLiteDatabase,
 		MaxIdleConns:  config.Get().SQLiteMaxIdleConns,
 		MaxOpenConns:  config.Get().SQLiteMaxOpenConns,

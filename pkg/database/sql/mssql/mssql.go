@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/satriajidam/go-gin-skeleton/pkg/sqldb"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 
 	// Import Microsoft SQL Server driver.
 	_ "github.com/jinzhu/gorm/dialects/mssql"
@@ -12,7 +12,7 @@ import (
 
 // NewConnection initiates new connection to a Microsoft SQL Server database using provided
 // connection configs.
-func NewConnection(conf sqldb.Config) (*gorm.DB, error) {
+func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"sqlserver://%s:%s@%s:%s?database=%s&%s",
 		conf.Username,

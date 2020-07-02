@@ -1,7 +1,7 @@
-package sqldb
+package sql
 
-// Config stores SQL database common connection config.
-type Config struct {
+// DBConfig stores SQL database common connection config.
+type DBConfig struct {
 	Host          string
 	Port          string
 	Database      string
