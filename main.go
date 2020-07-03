@@ -37,7 +37,9 @@ func main() {
 		panic(err)
 	}
 
-	// Graceful shutdown: https://chenyitian.gitbooks.io/gin-web-framework/docs/38.html
+	// Graceful shutdown:
+	// - https://chenyitian.gitbooks.io/gin-web-framework/docs/38.html
+	// - https://medium.com/honestbee-tw-engineer/gracefully-shutdown-in-go-http-server-5f5e6b83da5a
 	// Wait for interrupt signal to gracefully shutdown the server.
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
