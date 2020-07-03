@@ -26,10 +26,10 @@ type Config struct {
 	HTTPServerDisallowUnknownJSONFields bool   `envconfig:"HTTP_SERVER_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
 
 	// GRPC Server configurations.
-	GRPCPort string `envconfig:"GRPC_PORT" default:"9090"`
+	GRPCServerPort string `envconfig:"GRPC_SERVER_PORT" default:"9090"`
 
 	// Prometheus Server configurations.
-	PrometheusPort string `envconfig:"PROMETHEUS_PORT" default:"9180"`
+	PrometheusServerPort string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
 
 	// MySQL database configurations.
 	MySQLHost     string `envconfig:"MYSQL_HOST" default:"127.0.0.1"`
