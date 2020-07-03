@@ -1,6 +1,12 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
@@ -16,11 +22,10 @@ func main() {
 		SingularTable: config.Get().SQLiteSingularTable,
 		DebugMode:     config.Get().SQLiteDebugMode,
 	})
+	defer dbconn.Close()
 	if err != nil {
 		panic(err)
 	}
-
-	defer dbconn.Close()
 
 	httpServer := http.NewServer(
 		config.Get().HTTPServerPort,
@@ -31,4 +36,19 @@ func main() {
 	if err := <-server.StartServers(httpServer); err != nil {
 		panic(err)
 	}
+
+	// Graceful shutdown: https://chenyitian.gitbooks.io/gin-web-framework/docs/38.html
+	// Wait for interrupt signal to gracefully shutdown the server.
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	// Set graceful shutdown timeout to N seconds.
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(config.Get().GracefulTimeout)*time.Second,
+	)
+	defer cancel()
+
+	server.StopServers(ctx, httpServer)
 }

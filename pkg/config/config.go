@@ -17,6 +17,9 @@ type Config struct {
 	// - debug
 	AppMode string `envconfig:"APP_MODE" default:"debug"`
 
+	// Graceful shutdown timeout in seconds.
+	GracefulTimeout int `envconfig:"GRACEFUL_TIMEOUT" default:"5"`
+
 	// HTTP Server configurations.
 	HTTPServerPort                      string `envconfig:"HTTP_SERVER_PORT" default:"80"`
 	HTTPServerMode                      string `envconfig:"HTTP_SERVER_MODE" default:"debug"`

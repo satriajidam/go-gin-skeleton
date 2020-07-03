@@ -46,7 +46,7 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
 
 	output.FormatLevel = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
+		return strings.ToUpper(fmt.Sprintf("| %s |", i))
 	}
 
 	output.FormatMessage = func(i interface{}) string {

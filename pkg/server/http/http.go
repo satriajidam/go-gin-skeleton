@@ -1,7 +1,9 @@
 package http
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
@@ -9,8 +11,8 @@ import (
 
 // Server represents the HTTP server object.
 type Server struct {
-	router *gin.Engine
-	port   string
+	http *http.Server
+	port string
 }
 
 // NewServer creates new HTTP server.
@@ -22,13 +24,28 @@ func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
 	}
 
 	return &Server{
-		router: gin.New(),
-		port:   port,
+		http: &http.Server{
+			Addr:    fmt.Sprintf(":%s", port),
+			Handler: gin.Default(),
+		},
+		port: port,
 	}
 }
 
-// Start starts the HTTP server,
+// Start starts the HTTP server.
 func (s *Server) Start() error {
-	log.Info(fmt.Sprintf("Starting http server on port %s", s.port))
-	return s.router.Run(fmt.Sprintf(":%s", s.port))
+	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.port))
+	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+	return nil
+}
+
+// Stop stops the HTTP server.
+func (s *Server) Stop(ctx context.Context) error {
+	log.Info(fmt.Sprintf("Stop HTTP server on port %s", s.port))
+	if err := s.http.Shutdown(ctx); err != nil {
+		return err
+	}
+	return nil
 }
