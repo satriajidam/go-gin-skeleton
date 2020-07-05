@@ -3,6 +3,7 @@ package logger
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +26,7 @@ type Config struct {
 }
 
 // New initializes the logging middleware.
-func New(config ...Config) gin.HandlerFunc {
+func New(port string, config ...Config) gin.HandlerFunc {
 	var newConfig Config
 	if len(config) > 0 {
 		newConfig = config[0]
@@ -84,6 +85,8 @@ func New(config ...Config) gin.HandlerFunc {
 				errMsg = ctx.Errors.String()
 			}
 
+			msg := fmt.Sprintf("HTTP server log on port %s", port)
+
 			dumplogger := sublog.With().
 				Str("request-id", requestID).
 				Int("status", ctx.Writer.Status()).
@@ -98,14 +101,14 @@ func New(config ...Config) gin.HandlerFunc {
 			switch {
 			case ctx.Writer.Status() >= http.StatusBadRequest && ctx.Writer.Status() < http.StatusInternalServerError:
 				{
-					dumplogger.Warn().Msg("")
+					dumplogger.Warn().Msg(msg)
 				}
 			case ctx.Writer.Status() >= http.StatusInternalServerError:
 				{
-					dumplogger.Error().Str("error", errMsg).Msg("")
+					dumplogger.Error().Str("error", errMsg).Msg(msg)
 				}
 			default:
-				dumplogger.Info().Msg("")
+				dumplogger.Info().Msg(msg)
 			}
 		}
 	}

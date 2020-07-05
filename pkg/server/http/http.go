@@ -32,7 +32,7 @@ func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
 	router.Use(
 		gin.Recovery(),
 		requestid.New(),
-		logger.New(),
+		logger.New(port),
 	)
 
 	loadPredefinedRoutes(router)
