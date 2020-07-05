@@ -28,9 +28,6 @@ var predefinedRoutes = []predefinedRoute{
 				return
 			}
 
-			var respCode int
-			var respMessage string
-
 			switch code {
 			case http.StatusContinue,
 				http.StatusSwitchingProtocols,
@@ -94,14 +91,11 @@ var predefinedRoutes = []predefinedRoute{
 				http.StatusLoopDetected,
 				http.StatusNotExtended,
 				http.StatusNetworkAuthenticationRequired:
-				respCode = code
-				respMessage = http.StatusText(code)
+				ctx.String(code, http.StatusText(code))
 			default:
-				respCode = http.StatusBadRequest
-				respMessage = http.StatusText(http.StatusBadRequest)
+				ctx.String(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
 			}
 
-			ctx.String(respCode, respMessage)
 			return
 		},
 	},
