@@ -14,7 +14,8 @@ type predefinedRoute struct {
 }
 
 // List of predefined routes.
-// They can be overwritten after the HTTP server object is created.
+// They can be overwritten by re-declaring the same relative path but with different handler function
+// on the HTTP server object's router.
 var predefinedRoutes = []predefinedRoute{
 	{
 		httpMethod:    http.MethodGet,

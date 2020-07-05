@@ -25,8 +25,13 @@ func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
 		gin.EnableJsonDecoderDisallowUnknownFields()
 	}
 
-	router := gin.Default()
-	router.Use(requestid.New())
+	router := gin.New()
+
+	// Setup middlewares.
+	router.Use(
+		gin.Recovery(),
+		requestid.New(),
+	)
 
 	loadPredefinedRoutes(router)
 
