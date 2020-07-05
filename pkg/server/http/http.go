@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+	"github.com/satriajidam/go-gin-skeleton/pkg/server/http/middleware/logger"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http/middleware/requestid"
 )
 
@@ -31,6 +32,7 @@ func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
 	router.Use(
 		gin.Recovery(),
 		requestid.New(),
+		logger.New(),
 	)
 
 	loadPredefinedRoutes(router)
