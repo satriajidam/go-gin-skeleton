@@ -25,75 +25,84 @@ var predefinedRoutes = []predefinedRoute{
 			code, err := strconv.Atoi(ctx.Param("code"))
 			if err != nil {
 				ctx.String(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				return
 			}
 
+			var respCode int
+			var respMessage string
+
 			switch code {
-			case http.StatusContinue:
-			case http.StatusSwitchingProtocols:
-			case http.StatusProcessing:
-			case http.StatusEarlyHints:
-			case http.StatusOK:
-			case http.StatusCreated:
-			case http.StatusAccepted:
-			case http.StatusNonAuthoritativeInfo:
-			case http.StatusNoContent:
-			case http.StatusResetContent:
-			case http.StatusPartialContent:
-			case http.StatusMultiStatus:
-			case http.StatusAlreadyReported:
-			case http.StatusIMUsed:
-			case http.StatusMultipleChoices:
-			case http.StatusMovedPermanently:
-			case http.StatusFound:
-			case http.StatusSeeOther:
-			case http.StatusNotModified:
-			case http.StatusUseProxy:
-			case http.StatusTemporaryRedirect:
-			case http.StatusPermanentRedirect:
-			case http.StatusBadRequest:
-			case http.StatusUnauthorized:
-			case http.StatusPaymentRequired:
-			case http.StatusForbidden:
-			case http.StatusNotFound:
-			case http.StatusMethodNotAllowed:
-			case http.StatusNotAcceptable:
-			case http.StatusProxyAuthRequired:
-			case http.StatusRequestTimeout:
-			case http.StatusConflict:
-			case http.StatusGone:
-			case http.StatusLengthRequired:
-			case http.StatusPreconditionFailed:
-			case http.StatusRequestEntityTooLarge:
-			case http.StatusRequestURITooLong:
-			case http.StatusUnsupportedMediaType:
-			case http.StatusRequestedRangeNotSatisfiable:
-			case http.StatusExpectationFailed:
-			case http.StatusTeapot:
-			case http.StatusMisdirectedRequest:
-			case http.StatusUnprocessableEntity:
-			case http.StatusLocked:
-			case http.StatusFailedDependency:
-			case http.StatusTooEarly:
-			case http.StatusUpgradeRequired:
-			case http.StatusPreconditionRequired:
-			case http.StatusTooManyRequests:
-			case http.StatusRequestHeaderFieldsTooLarge:
-			case http.StatusUnavailableForLegalReasons:
-			case http.StatusInternalServerError:
-			case http.StatusNotImplemented:
-			case http.StatusBadGateway:
-			case http.StatusServiceUnavailable:
-			case http.StatusGatewayTimeout:
-			case http.StatusHTTPVersionNotSupported:
-			case http.StatusVariantAlsoNegotiates:
-			case http.StatusInsufficientStorage:
-			case http.StatusLoopDetected:
-			case http.StatusNotExtended:
-			case http.StatusNetworkAuthenticationRequired:
-				ctx.String(code, http.StatusText(code))
+			case http.StatusContinue,
+				http.StatusSwitchingProtocols,
+				http.StatusProcessing,
+				http.StatusEarlyHints,
+				http.StatusOK,
+				http.StatusCreated,
+				http.StatusAccepted,
+				http.StatusNonAuthoritativeInfo,
+				http.StatusNoContent,
+				http.StatusResetContent,
+				http.StatusPartialContent,
+				http.StatusMultiStatus,
+				http.StatusAlreadyReported,
+				http.StatusIMUsed,
+				http.StatusMultipleChoices,
+				http.StatusMovedPermanently,
+				http.StatusFound,
+				http.StatusSeeOther,
+				http.StatusNotModified,
+				http.StatusUseProxy,
+				http.StatusTemporaryRedirect,
+				http.StatusPermanentRedirect,
+				http.StatusBadRequest,
+				http.StatusUnauthorized,
+				http.StatusPaymentRequired,
+				http.StatusForbidden,
+				http.StatusNotFound,
+				http.StatusMethodNotAllowed,
+				http.StatusNotAcceptable,
+				http.StatusProxyAuthRequired,
+				http.StatusRequestTimeout,
+				http.StatusConflict,
+				http.StatusGone,
+				http.StatusLengthRequired,
+				http.StatusPreconditionFailed,
+				http.StatusRequestEntityTooLarge,
+				http.StatusRequestURITooLong,
+				http.StatusUnsupportedMediaType,
+				http.StatusRequestedRangeNotSatisfiable,
+				http.StatusExpectationFailed,
+				http.StatusTeapot,
+				http.StatusMisdirectedRequest,
+				http.StatusUnprocessableEntity,
+				http.StatusLocked,
+				http.StatusFailedDependency,
+				http.StatusTooEarly,
+				http.StatusUpgradeRequired,
+				http.StatusPreconditionRequired,
+				http.StatusTooManyRequests,
+				http.StatusRequestHeaderFieldsTooLarge,
+				http.StatusUnavailableForLegalReasons,
+				http.StatusInternalServerError,
+				http.StatusNotImplemented,
+				http.StatusBadGateway,
+				http.StatusServiceUnavailable,
+				http.StatusGatewayTimeout,
+				http.StatusHTTPVersionNotSupported,
+				http.StatusVariantAlsoNegotiates,
+				http.StatusInsufficientStorage,
+				http.StatusLoopDetected,
+				http.StatusNotExtended,
+				http.StatusNetworkAuthenticationRequired:
+				respCode = code
+				respMessage = http.StatusText(code)
 			default:
-				ctx.String(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				respCode = http.StatusBadRequest
+				respMessage = http.StatusText(http.StatusBadRequest)
 			}
+
+			ctx.String(respCode, respMessage)
+			return
 		},
 	},
 }
