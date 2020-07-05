@@ -45,7 +45,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
 
-	// Set graceful shutdown timeout to N seconds.
+	// Set graceful shutdown timeout to configured seconds.
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		time.Duration(config.Get().GracefulTimeout)*time.Second,

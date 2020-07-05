@@ -9,10 +9,11 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
-// Server represents the HTTP server object.
+// Server represents the implementation of HTTP server object.
 type Server struct {
-	http *http.Server
-	port string
+	http   *http.Server
+	Router *gin.Engine
+	Port   string
 }
 
 // NewServer creates new HTTP server.
@@ -23,18 +24,23 @@ func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
 		gin.EnableJsonDecoderDisallowUnknownFields()
 	}
 
+	router := gin.Default()
+
+	loadPredefinedRoutes(router)
+
 	return &Server{
 		http: &http.Server{
 			Addr:    fmt.Sprintf(":%s", port),
-			Handler: gin.Default(),
+			Handler: router,
 		},
-		port: port,
+		Router: router,
+		Port:   port,
 	}
 }
 
 // Start starts the HTTP server.
 func (s *Server) Start() error {
-	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.port))
+	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
 	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -43,7 +49,7 @@ func (s *Server) Start() error {
 
 // Stop stops the HTTP server.
 func (s *Server) Stop(ctx context.Context) error {
-	log.Info(fmt.Sprintf("Stop HTTP server on port %s", s.port))
+	log.Info(fmt.Sprintf("Stop HTTP server on port %s", s.Port))
 	if err := s.http.Shutdown(ctx); err != nil {
 		return err
 	}
