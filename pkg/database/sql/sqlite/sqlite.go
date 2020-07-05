@@ -8,7 +8,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
-// NewConnection initiates new connection to a SQLite database using provided
+// NewConnection creates a new connection to an SQLite database using provided
 // connection configs.
 func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
 	dbconn, err := gorm.Open("sqlite3", conf.Database)

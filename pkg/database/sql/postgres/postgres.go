@@ -10,7 +10,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-// NewConnection initiates new connection to a PostgreSQL database using provided
+// NewConnection creates a new connection to a PostgreSQL database using provided
 // connection configs.
 func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(

@@ -10,7 +10,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 )
 
-// NewConnection initiates new connection to a Microsoft SQL Server database using provided
+// NewConnection creates a new connection to a Microsoft SQL Server database using provided
 // connection configs.
 func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
