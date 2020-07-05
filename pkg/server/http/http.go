@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+	"github.com/satriajidam/go-gin-skeleton/pkg/server/http/middleware/requestid"
 )
 
 // Server represents the implementation of HTTP server object.
@@ -25,6 +26,7 @@ func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
 	}
 
 	router := gin.Default()
+	router.Use(requestid.New())
 
 	loadPredefinedRoutes(router)
 
