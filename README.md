@@ -10,5 +10,5 @@ A skeleton project for building RESTful API with Go &amp; Gin using Clean Archit
 * SQL Database ORM: [jinzhu/gorm](https://github.com/jinzhu/gorm)
 * KV Store Abstrction: [philippgille/gokv](https://github.com/philippgille/gokv)
 * Logging: [rs/zerolog](https://github.com/rs/zerolog)
-* Telemetry: [open-telemetry/opentelemetry-go](https://github.com/open-telemetry/opentelemetry-go)
+* Prometheus: [prometheus/client_golang](https://github.com/prometheus/client_golang)
 * Validator: [go-playground/validator](github.com/go-playground/validator)
