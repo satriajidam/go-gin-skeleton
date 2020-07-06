@@ -46,7 +46,7 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
 
 	output.FormatLevel = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("| %s |", i))
+		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
 	}
 
 	output.FormatMessage = func(i interface{}) string {
@@ -58,38 +58,50 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	}
 
 	output.FormatFieldValue = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("\"%s\"", i))
+		return fmt.Sprintf("\"%s\"", i)
 	}
 
 	return output
 }
 
+// Stdout returns logger which prints to console stdout.
+func Stdout() *zerolog.Logger {
+	logger := singleton.stdout
+	return &logger
+}
+
+// Stderr returns logger which prints to console stderr.
+func Stderr() *zerolog.Logger {
+	logger := singleton.stderr
+	return &logger
+}
+
 // Panic prints panic level logs to Stderr.
 func Panic(err error, msg string) {
-	singleton.stderr.Panic().Timestamp().Err(err).Msg(msg)
+	Stderr().Panic().Timestamp().Err(err).Msg(msg)
 }
 
 // Fatal prints fatal level logs to Stderr.
 func Fatal(err error, msg string) {
-	singleton.stderr.Fatal().Timestamp().Err(err).Msg(msg)
+	Stderr().Fatal().Timestamp().Err(err).Msg(msg)
 }
 
 // Error prints error level logs to Stderr.
 func Error(err error, msg string) {
-	singleton.stderr.Error().Timestamp().Err(err).Msg(msg)
+	Stderr().Error().Timestamp().Err(err).Msg(msg)
 }
 
 // Warn prints warn level logs to Stdout.
 func Warn(msg string) {
-	singleton.stdout.Warn().Timestamp().Msg(msg)
+	Stdout().Warn().Timestamp().Msg(msg)
 }
 
 // Info prints info level logs to Stdout.
 func Info(msg string) {
-	singleton.stdout.Info().Timestamp().Msg(msg)
+	Stdout().Info().Timestamp().Msg(msg)
 }
 
 // Debug prints debug level logs to Stdout.
 func Debug(msg string) {
-	singleton.stdout.Debug().Timestamp().Msg(msg)
+	Stdout().Debug().Timestamp().Msg(msg)
 }

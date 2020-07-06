@@ -12,17 +12,42 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http/middleware/requestid"
 )
 
 // Config defines the config for logger middleware
 type Config struct {
-	Logger *zerolog.Logger
+	Stdout *zerolog.Logger
+	Stderr *zerolog.Logger
 	// UTC a boolean stating whether to use UTC time zone or local.
 	UTC            bool
 	SkipPath       []string
 	SkipPathRegexp *regexp.Regexp
+}
+
+type logFields struct {
+	requestID string
+	status    int
+	method    string
+	path      string
+	clientIP  string
+	latency   time.Duration
+	userAgent string
+	payload   string
+}
+
+func createDumplogger(logger *zerolog.Logger, fields logFields) zerolog.Logger {
+	return logger.With().
+		Str("requestID", fields.requestID).
+		Int("status", fields.status).
+		Str("method", fields.method).
+		Str("path", fields.path).
+		Str("clientIP", fields.clientIP).
+		Dur("latency", fields.latency).
+		Str("userAgent", fields.userAgent).
+		Str("payload", fields.payload).
+		Logger()
 }
 
 // New initializes the logging middleware.
@@ -31,6 +56,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 	if len(config) > 0 {
 		newConfig = config[0]
 	}
+
 	var skip map[string]struct{}
 	if length := len(newConfig.SkipPath); length > 0 {
 		skip = make(map[string]struct{}, length)
@@ -39,11 +65,18 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		}
 	}
 
-	var sublog zerolog.Logger
-	if newConfig.Logger == nil {
-		sublog = log.Logger
+	var stdout *zerolog.Logger
+	if newConfig.Stdout == nil {
+		stdout = log.Stdout()
 	} else {
-		sublog = *newConfig.Logger
+		stdout = newConfig.Stdout
+	}
+
+	var stderr *zerolog.Logger
+	if newConfig.Stderr == nil {
+		stderr = log.Stderr()
+	} else {
+		stderr = newConfig.Stderr
 	}
 
 	return func(ctx *gin.Context) {
@@ -85,30 +118,33 @@ func New(port string, config ...Config) gin.HandlerFunc {
 				errMsg = ctx.Errors.String()
 			}
 
-			msg := fmt.Sprintf("HTTP server log on port %s", port)
+			msg := fmt.Sprintf("HTTP request on port %s", port)
 
-			dumplogger := sublog.With().
-				Str("request-id", requestID).
-				Int("status", ctx.Writer.Status()).
-				Str("method", ctx.Request.Method).
-				Str("path", path).
-				Str("client-ip", ctx.ClientIP()).
-				Dur("latency", latency).
-				Str("user-agent", ctx.Request.UserAgent()).
-				Str("payload", string(body)).
-				Logger()
+			fields := logFields{
+				requestID: requestID,
+				status:    ctx.Writer.Status(),
+				method:    ctx.Request.Method,
+				path:      path,
+				clientIP:  ctx.ClientIP(),
+				latency:   latency,
+				userAgent: ctx.Request.UserAgent(),
+				payload:   string(body),
+			}
+
+			dumpStdout := createDumplogger(stdout, fields)
+			dumpStderr := createDumplogger(stderr, fields)
 
 			switch {
 			case ctx.Writer.Status() >= http.StatusBadRequest && ctx.Writer.Status() < http.StatusInternalServerError:
 				{
-					dumplogger.Warn().Msg(msg)
+					dumpStdout.Warn().Timestamp().Msg(msg)
 				}
 			case ctx.Writer.Status() >= http.StatusInternalServerError:
 				{
-					dumplogger.Error().Str("error", errMsg).Msg(msg)
+					dumpStderr.Error().Timestamp().Str("error", errMsg).Msg(msg)
 				}
 			default:
-				dumplogger.Info().Msg(msg)
+				dumpStdout.Info().Timestamp().Msg(msg)
 			}
 		}
 	}
