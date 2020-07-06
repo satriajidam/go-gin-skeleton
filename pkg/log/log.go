@@ -7,36 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/rs/zerolog"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
-)
-
-// Color returns a colorized wrapper to fmt.Sprintf based on the given color string.
-func Color(colorString string) func(...interface{}) string {
-	sprint := func(args ...interface{}) string {
-		return fmt.Sprintf(colorString,
-			fmt.Sprint(args...))
-	}
-	return sprint
-}
-
-var (
-	// Black color.
-	Black = Color("\033[1;30m%s\033[0m")
-	// White color.
-	White = Color("\033[1;37m%s\033[0m")
-	// Red color.
-	Red = Color("\033[1;31m%s\033[0m")
-	// Green color.
-	Green = Color("\033[1;32m%s\033[0m")
-	// Yellow color.
-	Yellow = Color("\033[1;33m%s\033[0m")
-	// Purple color.
-	Purple = Color("\033[1;34m%s\033[0m")
-	// Magenta color.
-	Magenta = Color("\033[1;35m%s\033[0m")
-	// Teal color.
-	Teal = Color("\033[1;36m%s\033[0m")
 )
 
 type logger struct {
@@ -47,6 +20,22 @@ type logger struct {
 var (
 	once      sync.Once
 	singleton *logger
+)
+
+const (
+	// LogFieldError is a field for error log.
+	LogFieldError = "error"
+
+	// LevelInfo is a level for info log.
+	LevelInfo = "INFO"
+	// LevelWarn is a level for warn log.
+	LevelWarn = "WARN"
+	// LevelError is a level for error log.
+	LevelError = "ERROR"
+	// LevelFatal is a level for fatal log.
+	LevelFatal = "FATAL"
+	// LevelPanic is a level for panic log.
+	LevelPanic = "PANIC"
 )
 
 func init() {
@@ -74,41 +63,49 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
 
 	output.FormatTimestamp = func(i interface{}) string {
-		return Black(fmt.Sprintf("%s", i))
+		return fmt.Sprint(aurora.BrightBlack(i))
 	}
 
 	output.FormatLevel = func(i interface{}) string {
 		level := strings.ToUpper(fmt.Sprintf("%v", i))
 		logStr := fmt.Sprintf("| %-6s|", level)
 		switch level {
-		case "INFO":
-			return Green(logStr)
-		case "WARN":
-			return Yellow(logStr)
-		case "ERROR", "FATAL", "PANIC":
-			return Red(logStr)
+		case LevelInfo:
+			return fmt.Sprint(aurora.BrightGreen(logStr))
+		case LevelWarn:
+			return fmt.Sprint(aurora.BrightYellow(logStr))
+		case LevelError, LevelFatal, LevelPanic:
+			return fmt.Sprint(aurora.BrightRed(logStr))
 		default:
-			return White(logStr)
+			return fmt.Sprint(aurora.BrightWhite(logStr))
 		}
 	}
 
 	output.FormatMessage = func(i interface{}) string {
-		return White(fmt.Sprintf("message=\"%s\"", i))
+		return fmt.Sprintf("%s=\"%s\"", aurora.BrightCyan("message"), aurora.BrightWhite(i))
 	}
 
 	output.FormatFieldName = func(i interface{}) string {
-		fieldName := strings.ToLower(fmt.Sprintf("%v", i))
+		fieldName := fmt.Sprintf("%v", i)
 		logStr := fmt.Sprintf("%s=", fieldName)
 		switch fieldName {
-		case "error":
-			return Red(logStr)
+		case LogFieldError:
+			return fmt.Sprint(aurora.BrightRed(logStr))
 		default:
-			return Teal(logStr)
+			return fmt.Sprint(aurora.BrightCyan(logStr))
 		}
 	}
 
 	output.FormatFieldValue = func(i interface{}) string {
-		return White(fmt.Sprintf("\"%s\"", i))
+		return fmt.Sprint(aurora.BrightWhite(fmt.Sprintf("\"%s\"", i)))
+	}
+
+	output.FormatErrFieldName = func(i interface{}) string {
+		return fmt.Sprint(aurora.BrightRed(fmt.Sprintf("%s=", i)))
+	}
+
+	output.FormatErrFieldValue = func(i interface{}) string {
+		return fmt.Sprint(aurora.BrightRed(fmt.Sprintf("\"%s\"", i)))
 	}
 
 	return output

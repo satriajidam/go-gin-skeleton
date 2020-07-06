@@ -118,7 +118,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 				errMsg = ctx.Errors.String()
 			}
 
-			msg := fmt.Sprintf("HTTP request on port %s", port)
+			msg := fmt.Sprintf("HTTP request to port %s", port)
 
 			fields := logFields{
 				requestID: requestID,
@@ -141,7 +141,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 				}
 			case ctx.Writer.Status() >= http.StatusInternalServerError:
 				{
-					dumpStderr.Error().Timestamp().Str("error", errMsg).Msg(msg)
+					dumpStderr.Error().Timestamp().Str(log.LogFieldError, errMsg).Msg(msg)
 				}
 			default:
 				dumpStdout.Info().Timestamp().Msg(msg)

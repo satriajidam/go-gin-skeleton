@@ -8,6 +8,7 @@ require (
 	github.com/jinzhu/gorm v1.9.14
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/rs/zerolog v1.19.0
 	github.com/stretchr/testify v1.6.1 // indirect
