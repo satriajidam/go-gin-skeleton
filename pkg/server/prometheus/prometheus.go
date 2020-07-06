@@ -3,6 +3,7 @@ package prometheus
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -64,8 +65,8 @@ possible customer name, you could use this function:
 func(c *gin.Context) string {
 	url := c.Request.URL.String()
 	for _, p := range c.Params {
-		if p.Key == "name" {
-			url = strings.Replace(url, p.Value, ":name", 1)
+		if s.Key == "name" {
+			url = strings.Replace(url, s.Value, ":name", 1)
 			break
 		}
 	}
@@ -86,17 +87,20 @@ type Metric struct {
 	Args            []string
 }
 
-// Prometheus contains the metrics gathered by the instance and its path.
-type Prometheus struct {
+// Server represents the implementation of Prometheus server object.
+// It contains the metrics gathered by the instance and its path.
+type Server struct {
 	reqCnt               *prometheus.CounterVec
 	reqDur, reqSz, resSz prometheus.Summary
-	router               *gin.Engine
-	listenAddress        string
 	PushGateway          PushGateway
 
 	MetricsList []*Metric
 
 	ReqCntURLLabelMappingFn RequestCounterURLLabelMappingFn
+
+	http   *http.Server
+	Router *gin.Engine
+	Port   string
 }
 
 // PushGateway contains the configuration for pushing to a Prometheus pushgateway (optional).
@@ -116,15 +120,21 @@ type PushGateway struct {
 	Job string
 }
 
-// NewPrometheus generates a new set of metrics with a certain subsystem name.
-func NewPrometheus(subsystem string, expandedParams []string) *Prometheus {
+// NewServer creates new Prometheus server. It generates a new set of metrics
+// with a certain subsystem name.
+func NewServer(port, subsystem string, expandedParams []string) *Server {
 	var metricsList []*Metric
 
 	for _, metric := range standardMetrics {
 		metricsList = append(metricsList, metric)
 	}
 
-	p := &Prometheus{
+	router := gin.New()
+	router.Use(gin.Recovery())
+
+	expandedParams = append(expandedParams, "code")
+
+	s := &Server{
 		MetricsList: metricsList,
 		ReqCntURLLabelMappingFn: func(c *gin.Context) string {
 			url := c.Request.URL.EscapedPath() // i.e. by default do nothing, i.e. return URL as is
@@ -140,11 +150,17 @@ func NewPrometheus(subsystem string, expandedParams []string) *Prometheus {
 			}
 			return url
 		},
+		http: &http.Server{
+			Addr:    fmt.Sprintf(":%s", port),
+			Handler: router,
+		},
+		Router: router,
+		Port:   port,
 	}
 
-	p.registerMetrics(subsystem)
+	s.registerMetrics("subsystem")
 
-	return p
+	return s
 }
 
 func contains(slice []string, s string) bool {
@@ -156,68 +172,48 @@ func contains(slice []string, s string) bool {
 	return false
 }
 
+// Start starts the Prometheus server.
+func (s *Server) Start() error {
+	log.Info(fmt.Sprintf("Start Prometheus server on port %s", s.Port))
+	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+	return nil
+}
+
+// Stop stops the Prometheus server.
+func (s *Server) Stop(ctx context.Context) error {
+	log.Info(fmt.Sprintf("Stop Prometheus server on port %s", s.Port))
+	if err := s.http.Shutdown(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 // SetPushGateway sends metrics to a remote pushgateway exposed on pushGatewayURL
 // every pushIntervalSeconds. Metrics are fetched from metricsURL.
-func (p *Prometheus) SetPushGateway(pushGatewayURL, metricsURL string, pushIntervalSeconds time.Duration) {
-	p.PushGateway.GatewayURL = pushGatewayURL
-	p.PushGateway.MetricsURL = metricsURL
-	p.PushGateway.IntervalSeconds = pushIntervalSeconds
-	p.startPushTicker()
+func (s *Server) SetPushGateway(pushGatewayURL, metricsURL string, pushIntervalSeconds time.Duration) {
+	s.PushGateway.GatewayURL = pushGatewayURL
+	s.PushGateway.MetricsURL = metricsURL
+	s.PushGateway.IntervalSeconds = pushIntervalSeconds
+	s.startPushTicker()
 }
 
 // SetPushGatewayJob job name, defaults to "gin"
-func (p *Prometheus) SetPushGatewayJob(j string) {
-	p.PushGateway.Job = j
+func (s *Server) SetPushGatewayJob(j string) {
+	s.PushGateway.Job = j
 }
 
-// SetListenAddress for exposing metrics on address. If not set, it will be exposed at the
-// same address of the gin engine that is being used.
-func (p *Prometheus) SetListenAddress(address string) {
-	p.listenAddress = address
-	if p.listenAddress != "" {
-		p.router = gin.Default()
-	}
+func (s *Server) setMetricsPath(e *gin.Engine, metricsPath string) {
+	s.Router.GET(metricsPath, prometheusHandler())
 }
 
-// SetListenAddressWithRouter for using a separate router to expose metrics. (this keeps things like GET /metrics out of
-// your content's access log).
-func (p *Prometheus) SetListenAddressWithRouter(listenAddress string, r *gin.Engine) {
-	p.listenAddress = listenAddress
-	if len(p.listenAddress) > 0 {
-		p.router = r
-	}
+func (s *Server) setMetricsPathWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
+	s.Router.GET(metricsPath, gin.BasicAuth(accounts), prometheusHandler())
 }
 
-func (p *Prometheus) setMetricsPath(e *gin.Engine, metricsPath string) {
-	if p.listenAddress != "" {
-		p.router.GET(metricsPath, prometheusHandler())
-		p.runServer()
-	} else {
-		e.GET(metricsPath, prometheusHandler())
-	}
-}
-
-func (p *Prometheus) setMetricsPathWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
-	if p.listenAddress != "" {
-		p.router.GET(metricsPath, gin.BasicAuth(accounts), prometheusHandler())
-		p.runServer()
-	} else {
-		e.GET(metricsPath, gin.BasicAuth(accounts), prometheusHandler())
-	}
-}
-
-func (p *Prometheus) runServer() {
-	if p.listenAddress != "" {
-		go func() {
-			if err := p.router.Run(p.listenAddress); err != nil {
-				log.Error(err, "Failed starting Prometheus server")
-			}
-		}()
-	}
-}
-
-func (p *Prometheus) getMetrics() []byte {
-	response, err := http.Get(p.PushGateway.MetricsURL)
+func (s *Server) getMetrics() []byte {
+	response, err := http.Get(s.PushGateway.MetricsURL)
 	if err != nil {
 		log.Error(err, "Failed getting Prometheus metrics")
 	}
@@ -236,16 +232,16 @@ func (p *Prometheus) getMetrics() []byte {
 	return body
 }
 
-func (p *Prometheus) getPushGatewayURL() string {
+func (s *Server) getPushGatewayURL() string {
 	h, _ := os.Hostname()
-	if p.PushGateway.Job == "" {
-		p.PushGateway.Job = "gin"
+	if s.PushGateway.Job == "" {
+		s.PushGateway.Job = "gin"
 	}
-	return p.PushGateway.GatewayURL + "/metrics/job/" + p.PushGateway.Job + "/instance/" + h
+	return s.PushGateway.GatewayURL + "/metrics/job/" + s.PushGateway.Job + "/instance/" + h
 }
 
-func (p *Prometheus) sendMetricsToPushGateway(metrics []byte) {
-	req, err := http.NewRequest("POST", p.getPushGatewayURL(), bytes.NewBuffer(metrics))
+func (s *Server) sendMetricsToPushGateway(metrics []byte) {
+	req, err := http.NewRequest("POST", s.getPushGatewayURL(), bytes.NewBuffer(metrics))
 	client := &http.Client{}
 	_, err = client.Do(req)
 	if err != nil {
@@ -253,11 +249,11 @@ func (p *Prometheus) sendMetricsToPushGateway(metrics []byte) {
 	}
 }
 
-func (p *Prometheus) startPushTicker() {
-	ticker := time.NewTicker(time.Second * p.PushGateway.IntervalSeconds)
+func (s *Server) startPushTicker() {
+	ticker := time.NewTicker(time.Second * s.PushGateway.IntervalSeconds)
 	go func() {
 		for range ticker.C {
-			p.sendMetricsToPushGateway(p.getMetrics())
+			s.sendMetricsToPushGateway(s.getMetrics())
 		}
 	}()
 }
@@ -338,48 +334,48 @@ func NewMetric(m *Metric, subsystem string) prometheus.Collector {
 	return metric
 }
 
-func (p *Prometheus) registerMetrics(subsystem string) {
-	for _, metricDef := range p.MetricsList {
+func (s *Server) registerMetrics(subsystem string) {
+	for _, metricDef := range s.MetricsList {
 		metric := NewMetric(metricDef, subsystem)
 		if err := prometheus.Register(metric); err != nil {
 			log.Error(err, fmt.Sprintf("%s could not be registered in Prometheus", metricDef.Name))
 		}
 		switch metricDef {
 		case reqCnt:
-			p.reqCnt = metric.(*prometheus.CounterVec)
+			s.reqCnt = metric.(*prometheus.CounterVec)
 		case reqDur:
-			p.reqDur = metric.(prometheus.Summary)
+			s.reqDur = metric.(prometheus.Summary)
 		case resSz:
-			p.resSz = metric.(prometheus.Summary)
+			s.resSz = metric.(prometheus.Summary)
 		case reqSz:
-			p.reqSz = metric.(prometheus.Summary)
+			s.reqSz = metric.(prometheus.Summary)
 		}
 		metricDef.MetricCollector = metric
 	}
 }
 
 // Use adds the middleware to a gin engine.
-func (p *Prometheus) Use(e *gin.Engine, metricsPath string) {
-	e.Use(p.handlerFunc(metricsPath))
-	p.setMetricsPath(e, metricsPath)
+func (s *Server) Use(e *gin.Engine, metricsPath string) {
+	e.Use(s.handlerFunc(metricsPath))
+	s.setMetricsPath(e, metricsPath)
 }
 
 // UseWithCustomMetrics adds the middleware to a gin engine with custom metrics.
-func (p *Prometheus) UseWithCustomMetrics(e *gin.Engine, gatherer prometheus.Gatherers, metricsPath string) {
-	p.setMetricsPathWithCustomMetrics(e, gatherer, metricsPath)
+func (s *Server) UseWithCustomMetrics(e *gin.Engine, gatherer prometheus.Gatherers, metricsPath string) {
+	s.setMetricsPathWithCustomMetrics(e, gatherer, metricsPath)
 }
 
-func (p *Prometheus) setMetricsPathWithCustomMetrics(e *gin.Engine, gatherer prometheus.Gatherers, metricsPath string) {
-	p.router.GET(metricsPath, prometheusHandlerFor(gatherer))
+func (s *Server) setMetricsPathWithCustomMetrics(e *gin.Engine, gatherer prometheus.Gatherers, metricsPath string) {
+	s.Router.GET(metricsPath, prometheusHandlerFor(gatherer))
 }
 
 // UseWithAuth adds the middleware to a gin engine with BasicAuth.
-func (p *Prometheus) UseWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
-	e.Use(p.handlerFunc(metricsPath))
-	p.setMetricsPathWithAuth(e, accounts, metricsPath)
+func (s *Server) UseWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
+	e.Use(s.handlerFunc(metricsPath))
+	s.setMetricsPathWithAuth(e, accounts, metricsPath)
 }
 
-func (p *Prometheus) handlerFunc(metricsPath string) gin.HandlerFunc {
+func (s *Server) handlerFunc(metricsPath string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.URL.String() == metricsPath {
 			c.Next()
@@ -395,11 +391,11 @@ func (p *Prometheus) handlerFunc(metricsPath string) gin.HandlerFunc {
 		elapsed := float64(time.Since(start)) / float64(time.Second)
 		resSz := float64(c.Writer.Size())
 
-		p.reqDur.Observe(elapsed)
-		url := p.ReqCntURLLabelMappingFn(c)
-		p.reqCnt.WithLabelValues(status, c.Request.Method, c.Request.Host, url).Inc()
-		p.reqSz.Observe(float64(reqSz))
-		p.resSz.Observe(resSz)
+		s.reqDur.Observe(elapsed)
+		url := s.ReqCntURLLabelMappingFn(c)
+		s.reqCnt.WithLabelValues(status, c.Request.Method, c.Request.Host, url).Inc()
+		s.reqSz.Observe(float64(reqSz))
+		s.resSz.Observe(resSz)
 	}
 }
 

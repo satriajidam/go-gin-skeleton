@@ -12,6 +12,7 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
+	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
 )
 
 func main() {
@@ -33,7 +34,15 @@ func main() {
 		config.Get().HTTPServerDisallowUnknownJSONFields,
 	)
 
-	if err := <-server.StartServers(httpServer); err != nil {
+	prometheusServer := prometheus.NewServer(
+		config.Get().PrometheusServerPort,
+		config.Get().PrometheusServerMetricsSubsystem,
+		[]string{},
+	)
+
+	prometheusServer.Use(httpServer.Router, config.Get().PrometheusServerMetricsPath)
+
+	if err := <-server.StartServers(httpServer, prometheusServer); err != nil {
 		panic(err)
 	}
 
@@ -52,5 +61,5 @@ func main() {
 	)
 	defer cancel()
 
-	server.StopServers(ctx, httpServer)
+	server.StopServers(ctx, httpServer, prometheusServer)
 }

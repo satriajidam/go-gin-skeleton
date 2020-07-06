@@ -29,7 +29,9 @@ type Config struct {
 	GRPCServerPort string `envconfig:"GRPC_SERVER_PORT" default:"9090"`
 
 	// Prometheus Server configurations.
-	PrometheusServerPort string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
+	PrometheusServerPort             string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
+	PrometheusServerMetricsPath      string `envconfig:"PROMETHEUS_SERVER_METRICS_PATH" default:"/metrics"`
+	PrometheusServerMetricsSubsystem string `envconfig:"PROMETHEUS_SERVER_METRICS_SUBSYSTEM" default:"http"`
 
 	// MySQL database configurations.
 	MySQLHost     string `envconfig:"MYSQL_HOST" default:"127.0.0.1"`
