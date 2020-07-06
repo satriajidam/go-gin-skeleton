@@ -25,25 +25,29 @@ var reqCnt = &Metric{
 	Name:        "requests_total",
 	Description: "How many HTTP requests processed, partitioned by status code and HTTP method.",
 	Type:        "counter_vec",
-	Args:        []string{"code", "method", "host", "url"}}
+	Args:        []string{"code", "method", "host", "url"},
+}
 
 var reqDur = &Metric{
 	ID:          "reqDur",
 	Name:        "request_duration_seconds",
 	Description: "The HTTP request latencies in seconds.",
-	Type:        "summary"}
+	Type:        "summary",
+}
 
 var resSz = &Metric{
 	ID:          "resSz",
 	Name:        "response_size_bytes",
 	Description: "The HTTP response sizes in bytes.",
-	Type:        "summary"}
+	Type:        "summary",
+}
 
 var reqSz = &Metric{
 	ID:          "reqSz",
 	Name:        "request_size_bytes",
 	Description: "The HTTP request sizes in bytes.",
-	Type:        "summary"}
+	Type:        "summary",
+}
 
 var standardMetrics = []*Metric{
 	reqCnt,
@@ -114,7 +118,6 @@ type PushGateway struct {
 
 // NewPrometheus generates a new set of metrics with a certain subsystem name.
 func NewPrometheus(subsystem string, expandedParams []string) *Prometheus {
-
 	var metricsList []*Metric
 
 	for _, metric := range standardMetrics {
@@ -186,7 +189,6 @@ func (p *Prometheus) SetListenAddressWithRouter(listenAddress string, r *gin.Eng
 }
 
 func (p *Prometheus) setMetricsPath(e *gin.Engine, metricsPath string) {
-
 	if p.listenAddress != "" {
 		p.router.GET(metricsPath, prometheusHandler())
 		p.runServer()
@@ -196,14 +198,12 @@ func (p *Prometheus) setMetricsPath(e *gin.Engine, metricsPath string) {
 }
 
 func (p *Prometheus) setMetricsPathWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
-
 	if p.listenAddress != "" {
 		p.router.GET(metricsPath, gin.BasicAuth(accounts), prometheusHandler())
 		p.runServer()
 	} else {
 		e.GET(metricsPath, gin.BasicAuth(accounts), prometheusHandler())
 	}
-
 }
 
 func (p *Prometheus) runServer() {
@@ -339,7 +339,6 @@ func NewMetric(m *Metric, subsystem string) prometheus.Collector {
 }
 
 func (p *Prometheus) registerMetrics(subsystem string) {
-
 	for _, metricDef := range p.MetricsList {
 		metric := NewMetric(metricDef, subsystem)
 		if err := prometheus.Register(metric); err != nil {
