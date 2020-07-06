@@ -36,6 +36,8 @@ const (
 	LevelFatal = "FATAL"
 	// LevelPanic for panic log level.
 	LevelPanic = "PANIC"
+	// LevelDebug for debug log level.
+	LevelDebug = "DEBUG"
 )
 
 func init() {
