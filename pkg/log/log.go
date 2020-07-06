@@ -23,18 +23,18 @@ var (
 )
 
 const (
-	// LogFieldError is a field for error log.
+	// LogFieldError for error log field.
 	LogFieldError = "error"
 
-	// LevelInfo is a level for info log.
+	// LevelInfo for info log level.
 	LevelInfo = "INFO"
-	// LevelWarn is a level for warn log.
+	// LevelWarn for warn log level.
 	LevelWarn = "WARN"
-	// LevelError is a level for error log.
+	// LevelError for error log level.
 	LevelError = "ERROR"
-	// LevelFatal is a level for fatal log.
+	// LevelFatal for fatal log level.
 	LevelFatal = "FATAL"
-	// LevelPanic is a level for panic log.
+	// LevelPanic for panic log level.
 	LevelPanic = "PANIC"
 )
 
