@@ -11,6 +11,34 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 )
 
+// Color returns a colorized wrapper to fmt.Sprintf based on the given color string.
+func Color(colorString string) func(...interface{}) string {
+	sprint := func(args ...interface{}) string {
+		return fmt.Sprintf(colorString,
+			fmt.Sprint(args...))
+	}
+	return sprint
+}
+
+var (
+	// Black color.
+	Black = Color("\033[1;30m%s\033[0m")
+	// White color.
+	White = Color("\033[1;37m%s\033[0m")
+	// Red color.
+	Red = Color("\033[1;31m%s\033[0m")
+	// Green color.
+	Green = Color("\033[1;32m%s\033[0m")
+	// Yellow color.
+	Yellow = Color("\033[1;33m%s\033[0m")
+	// Purple color.
+	Purple = Color("\033[1;34m%s\033[0m")
+	// Magenta color.
+	Magenta = Color("\033[1;35m%s\033[0m")
+	// Teal color.
+	Teal = Color("\033[1;36m%s\033[0m")
+)
+
 type logger struct {
 	stderr zerolog.Logger
 	stdout zerolog.Logger
@@ -45,20 +73,42 @@ func init() {
 func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
 
+	output.FormatTimestamp = func(i interface{}) string {
+		return Black(fmt.Sprintf("%s", i))
+	}
+
 	output.FormatLevel = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
+		level := strings.ToUpper(fmt.Sprintf("%v", i))
+		logStr := fmt.Sprintf("| %-6s|", level)
+		switch level {
+		case "INFO":
+			return Green(logStr)
+		case "WARN":
+			return Yellow(logStr)
+		case "ERROR", "FATAL", "PANIC":
+			return Red(logStr)
+		default:
+			return White(logStr)
+		}
 	}
 
 	output.FormatMessage = func(i interface{}) string {
-		return fmt.Sprintf("message=\"%s\"", i)
+		return White(fmt.Sprintf("message=\"%s\"", i))
 	}
 
 	output.FormatFieldName = func(i interface{}) string {
-		return fmt.Sprintf("%s=", i)
+		fieldName := strings.ToLower(fmt.Sprintf("%v", i))
+		logStr := fmt.Sprintf("%s=", fieldName)
+		switch fieldName {
+		case "error":
+			return Red(logStr)
+		default:
+			return Teal(logStr)
+		}
 	}
 
 	output.FormatFieldValue = func(i interface{}) string {
-		return fmt.Sprintf("\"%s\"", i)
+		return White(fmt.Sprintf("\"%s\"", i))
 	}
 
 	return output
