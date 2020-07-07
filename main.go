@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
@@ -26,10 +25,6 @@ func main() {
 	}
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true)
-
-	httpServer.GET("/_health", func(ctx *gin.Context) {
-		ctx.JSON(200, map[string]string{"status": "healthy"})
-	})
 
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
