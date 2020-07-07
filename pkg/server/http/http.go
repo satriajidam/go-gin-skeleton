@@ -13,12 +13,11 @@ import (
 
 // Server represents the implementation of HTTP server object.
 type Server struct {
-	http                   *http.Server
-	router                 *gin.Engine
-	middlewares            []gin.HandlerFunc
-	routes                 []route
-	enablePredefinedRoutes bool
-	Port                   string
+	http        *http.Server
+	router      *gin.Engine
+	middlewares []gin.HandlerFunc
+	routes      []route
+	Port        string
 }
 
 type route struct {
@@ -29,6 +28,12 @@ type route struct {
 
 // NewServer creates new HTTP server.
 func NewServer(port string, enablePredefinedRoutes bool) *Server {
+	routes := []route{}
+
+	if enablePredefinedRoutes {
+		routes = append(routes, predefinedRoutes...)
+	}
+
 	return &Server{
 		router: gin.New(),
 		middlewares: []gin.HandlerFunc{
@@ -37,14 +42,23 @@ func NewServer(port string, enablePredefinedRoutes bool) *Server {
 			requestid.New(),
 			logger.New(port),
 		},
-		enablePredefinedRoutes: enablePredefinedRoutes,
-		Port:                   port,
+		routes: routes,
+		Port:   port,
 	}
 }
 
 // AddMiddleware adds a gin middleware the HTTP server.
 func (s *Server) AddMiddleware(h gin.HandlerFunc) {
 	s.middlewares = append(s.middlewares, h)
+}
+
+// GetRoutePaths retrieves all route paths registerd to this HTTP server.
+func (s *Server) GetRoutePaths() []string {
+	paths := []string{}
+	for _, r := range s.routes {
+		paths = append(paths, r.relativePath)
+	}
+	return paths
 }
 
 func loadRoutes(router *gin.Engine, routes []route) {
@@ -72,9 +86,6 @@ func loadRoutes(router *gin.Engine, routes []route) {
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
 	s.router.Use(s.middlewares...)
-	if s.enablePredefinedRoutes {
-		loadPredefinedRoutes(s.router)
-	}
 	loadRoutes(s.router, s.routes)
 	s.http = &http.Server{
 		Addr:    fmt.Sprintf(":%s", s.Port),

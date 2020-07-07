@@ -22,7 +22,11 @@ type Server struct {
 
 // Target defines a target gin engine to monitor.
 type Target struct {
-	HTTPServer *httpserver.Server
+	HTTPServer             *httpserver.Server
+	MetricsPrefix          string
+	GroupedStatus          bool
+	DisableMeasureSize     bool
+	DisableMeasureInflight bool
 }
 
 // NewServer creates new Prometheus server.
@@ -61,9 +65,22 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *Server) Monitor(targets ...*Target) {
 	for _, t := range targets {
 		mdlw := middleware.New(middleware.Config{
-			Recorder: metrics.NewRecorder(metrics.Config{}),
-			Service:  fmt.Sprintf("localhost:%s", t.HTTPServer.Port),
+			Recorder: metrics.NewRecorder(metrics.Config{
+				Prefix: t.MetricsPrefix,
+			}),
+			Service:                fmt.Sprintf("localhost:%s", t.HTTPServer.Port),
+			GroupedStatus:          t.GroupedStatus,
+			DisableMeasureSize:     t.DisableMeasureSize,
+			DisableMeasureInflight: t.DisableMeasureInflight,
 		})
-		t.HTTPServer.AddMiddleware(ginmiddleware.Handler("", mdlw))
+
+		// In order to avoid high cardinality metrics, register each route path to its
+		// own middleware handler using the path as its handler ID.
+		// This will make path with parameter like /provider/:name recorded as
+		// /provider/:name instead of /provider/aws or /provider/gcp.
+		// Ref: https://github.com/slok/go-http-metrics#custom-handler-id
+		for _, p := range t.HTTPServer.GetRoutePaths() {
+			t.HTTPServer.AddMiddleware(ginmiddleware.Handler(p, mdlw))
+		}
 	}
 }

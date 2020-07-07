@@ -29,10 +29,6 @@ var predefinedRoutes = []route{
 	},
 }
 
-func loadPredefinedRoutes(router *gin.Engine) {
-	loadRoutes(router, predefinedRoutes)
-}
-
 func getStatusCodeAndText(code int) (int, string) {
 	switch code {
 	case http.StatusContinue,
