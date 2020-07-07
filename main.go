@@ -1,12 +1,6 @@
 package main
 
 import (
-	"context"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
@@ -16,12 +10,14 @@ import (
 )
 
 func main() {
+	cfg := config.Get()
+
 	dbconn, err := sqlite.NewConnection(sql.DBConfig{
-		Database:      config.Get().SQLiteDatabase,
-		MaxIdleConns:  config.Get().SQLiteMaxIdleConns,
-		MaxOpenConns:  config.Get().SQLiteMaxOpenConns,
-		SingularTable: config.Get().SQLiteSingularTable,
-		DebugMode:     config.Get().SQLiteDebugMode,
+		Database:      cfg.SQLiteDatabase,
+		MaxIdleConns:  cfg.SQLiteMaxIdleConns,
+		MaxOpenConns:  cfg.SQLiteMaxOpenConns,
+		SingularTable: cfg.SQLiteSingularTable,
+		DebugMode:     cfg.SQLiteDebugMode,
 	})
 	defer dbconn.Close()
 	if err != nil {
@@ -29,37 +25,18 @@ func main() {
 	}
 
 	httpServer := http.NewServer(
-		config.Get().HTTPServerPort,
-		config.Get().HTTPServerMode,
-		config.Get().HTTPServerDisallowUnknownJSONFields,
+		cfg.HTTPServerPort,
+		cfg.HTTPServerMode,
+		cfg.HTTPServerDisallowUnknownJSONFields,
 	)
 
 	promServer := prometheus.NewServer(
-		config.Get().PrometheusServerPort,
-		config.Get().PrometheusServerMetricsSubsystem,
+		cfg.PrometheusServerPort,
+		cfg.PrometheusServerMetricsSubsystem,
 		[]string{},
 	)
 
-	promServer.Monitor(httpServer.Router, config.Get().PrometheusServerMetricsPath)
+	promServer.Monitor(httpServer.Router, cfg.PrometheusServerMetricsPath)
 
-	if err := <-server.StartServers(httpServer, promServer); err != nil {
-		panic(err)
-	}
-
-	// Graceful shutdown:
-	// - https://chenyitian.gitbooks.io/gin-web-framework/docs/38.html
-	// - https://medium.com/honestbee-tw-engineer/gracefully-shutdown-in-go-http-server-5f5e6b83da5a
-	// Wait for interrupt signal to gracefully shutdown the server.
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	<-quit
-
-	// Set graceful shutdown timeout to configured seconds.
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(config.Get().GracefulTimeout)*time.Second,
-	)
-	defer cancel()
-
-	server.StopServers(ctx, httpServer, promServer)
+	server.RunServersGracefully(cfg.GracefulTimeout, httpServer, promServer)
 }

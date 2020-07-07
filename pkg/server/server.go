@@ -2,6 +2,10 @@ package server
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
@@ -37,4 +41,28 @@ func StopServers(ctx context.Context, servers ...Server) {
 		}
 	}
 	log.Info("All servers exited properly")
+}
+
+// RunServersGracefully runs all given servers in a graceful way.
+func RunServersGracefully(timeout int, servers ...Server) {
+	if err := <-StartServers(servers...); err != nil {
+		panic(err)
+	}
+
+	// Graceful shutdown:
+	// - https://chenyitian.gitbooks.io/gin-web-framework/docs/38.html
+	// - https://medium.com/honestbee-tw-engineer/gracefully-shutdown-in-go-http-server-5f5e6b83da5a
+	// Wait for interrupt signal to gracefully shutdown the server.
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	<-quit
+
+	// Set graceful shutdown timeout to configured seconds.
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(timeout)*time.Second,
+	)
+	defer cancel()
+
+	StopServers(ctx, servers...)
 }
