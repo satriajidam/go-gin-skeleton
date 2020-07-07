@@ -37,5 +37,5 @@ func main() {
 
 	promServer.Monitor(httpServer.Router, cfg.PrometheusServerMetricsPath)
 
-	server.RunServersGracefully(cfg.GracefulTimeout, httpServer, promServer)
+	server.RunServersGracefully(cfg.GracefulTimeout, promServer, httpServer)
 }
