@@ -1,4 +1,4 @@
-// Package prometheus is based on: https://github.com/banzaicloud/go-gin-prometheus
+// Package prometheus is based on: https://github.com/zsais/go-gin-prometheus
 package prometheus
 
 import (
