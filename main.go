@@ -34,15 +34,15 @@ func main() {
 		config.Get().HTTPServerDisallowUnknownJSONFields,
 	)
 
-	prometheusServer := prometheus.NewServer(
+	promServer := prometheus.NewServer(
 		config.Get().PrometheusServerPort,
 		config.Get().PrometheusServerMetricsSubsystem,
 		[]string{},
 	)
 
-	prometheusServer.Use(httpServer.Router, config.Get().PrometheusServerMetricsPath)
+	promServer.Monitor(httpServer.Router, config.Get().PrometheusServerMetricsPath)
 
-	if err := <-server.StartServers(httpServer, prometheusServer); err != nil {
+	if err := <-server.StartServers(httpServer, promServer); err != nil {
 		panic(err)
 	}
 
@@ -61,5 +61,5 @@ func main() {
 	)
 	defer cancel()
 
-	server.StopServers(ctx, httpServer, prometheusServer)
+	server.StopServers(ctx, httpServer, promServer)
 }

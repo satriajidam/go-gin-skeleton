@@ -18,22 +18,27 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
-// Standard default metrics
-// counter, counter_vec, gauge, gauge_vec,
-// histogram, histogram_vec, summary, summary_vec
+var defaultMetricPath = "/metrics"
+
+// Standard default metrics:
+// - counter, counter_vec
+// - gauge, gauge_vec
+// - histogram, histogram_vec
+// - summary, summary_vec
 var reqCnt = &Metric{
 	ID:          "reqCnt",
 	Name:        "requests_total",
 	Description: "How many HTTP requests processed, partitioned by status code and HTTP method.",
 	Type:        "counter_vec",
-	Args:        []string{"code", "method", "host", "url"},
+	Args:        []string{"code", "method", "handler", "host", "url"},
 }
 
 var reqDur = &Metric{
 	ID:          "reqDur",
 	Name:        "request_duration_seconds",
 	Description: "The HTTP request latencies in seconds.",
-	Type:        "summary",
+	Type:        "histogram_vec",
+	Args:        []string{"code", "method", "handler", "host", "url"},
 }
 
 var resSz = &Metric{
@@ -63,7 +68,7 @@ the cardinality of the request counter's "url" label, which might be required in
 For instance, if for a "/customer/:name" route you don't want to generate a time series for every
 possible customer name, you could use this function:
 func(c *gin.Context) string {
-	url := c.Request.URL.String()
+	url := c.Request.URL.Path
 	for _, p := range c.Params {
 		if s.Key == "name" {
 			url = strings.Replace(url, s.Value, ":name", 1)
@@ -90,13 +95,17 @@ type Metric struct {
 // Server represents the implementation of Prometheus server object.
 // It contains the metrics gathered by the instance and its path.
 type Server struct {
-	reqCnt               *prometheus.CounterVec
-	reqDur, reqSz, resSz prometheus.Summary
-	PushGateway          PushGateway
+	reqCnt       *prometheus.CounterVec
+	reqDur       *prometheus.HistogramVec
+	reqSz, resSz prometheus.Summary
+	PushGateway  PushGateway
 
 	MetricsList []*Metric
 
 	ReqCntURLLabelMappingFn RequestCounterURLLabelMappingFn
+
+	// gin.Context string to use as a prometheus URL label.
+	URLLabelFromContext string
 
 	http   *http.Server
 	Router *gin.Engine
@@ -105,25 +114,32 @@ type Server struct {
 
 // PushGateway contains the configuration for pushing to a Prometheus pushgateway (optional).
 type PushGateway struct {
-	// Pushgateway interval in seconds.
-	IntervalSeconds time.Duration
+	// Push interval in seconds.
+	PushIntervalSeconds time.Duration
 
-	// Pushgateway URL in format http://domain:port
+	// Push Gateway URL in format http://domain:port
 	// where JOBNAME can be any string of your choice.
-	GatewayURL string
+	PushGatewayURL string
 
 	// Local metrics URL where metrics are fetched from, this could be ommited in the future
 	// if implemented using prometheus common/expfmt instead.
 	MetricsURL string
 
-	// Pushgateway job name, defaults to "gin".
+	// pushgateway job name, defaults to "gin".
 	Job string
 }
 
 // NewServer creates new Prometheus server. It generates a new set of metrics
 // with a certain subsystem name.
-func NewServer(port, subsystem string, expandedParams []string) *Server {
+func NewServer(port, subsystem string, expandedParams []string, customMetricsList ...[]*Metric) *Server {
+
 	var metricsList []*Metric
+
+	if len(customMetricsList) > 1 {
+		panic("Too many args. NewPrometheus( string, <optional []*Metric> ).")
+	} else if len(customMetricsList) == 1 {
+		metricsList = customMetricsList[0]
+	}
 
 	for _, metric := range standardMetrics {
 		metricsList = append(metricsList, metric)
@@ -138,15 +154,15 @@ func NewServer(port, subsystem string, expandedParams []string) *Server {
 		MetricsList: metricsList,
 		ReqCntURLLabelMappingFn: func(c *gin.Context) string {
 			url := c.Request.URL.EscapedPath() // i.e. by default do nothing, i.e. return URL as is
-			for _, p := range c.Params {
-				if contains(expandedParams, p.Key) {
+			for _, param := range c.Params {
+				if contains(expandedParams, param.Key) {
 					continue
 				}
 
 				// Overcome wildcard (*path) matching issue, which takes the beginning slash as well.
-				value := strings.TrimPrefix(p.Value, "/")
+				value := strings.TrimPrefix(param.Value, "/")
 
-				url = strings.Replace(url, value, ":"+p.Key, 1)
+				url = strings.Replace(url, value, ":"+param.Key, 1)
 			}
 			return url
 		},
@@ -158,7 +174,7 @@ func NewServer(port, subsystem string, expandedParams []string) *Server {
 		Port:   port,
 	}
 
-	s.registerMetrics("subsystem")
+	s.registerMetrics(subsystem)
 
 	return s
 }
@@ -193,13 +209,13 @@ func (s *Server) Stop(ctx context.Context) error {
 // SetPushGateway sends metrics to a remote pushgateway exposed on pushGatewayURL
 // every pushIntervalSeconds. Metrics are fetched from metricsURL.
 func (s *Server) SetPushGateway(pushGatewayURL, metricsURL string, pushIntervalSeconds time.Duration) {
-	s.PushGateway.GatewayURL = pushGatewayURL
+	s.PushGateway.PushGatewayURL = pushGatewayURL
 	s.PushGateway.MetricsURL = metricsURL
-	s.PushGateway.IntervalSeconds = pushIntervalSeconds
+	s.PushGateway.PushIntervalSeconds = pushIntervalSeconds
 	s.startPushTicker()
 }
 
-// SetPushGatewayJob job name, defaults to "gin"
+// SetPushGatewayJob job name, defaults to "gin".
 func (s *Server) SetPushGatewayJob(j string) {
 	s.PushGateway.Job = j
 }
@@ -215,18 +231,18 @@ func (s *Server) setMetricsPathWithAuth(e *gin.Engine, accounts gin.Accounts, me
 func (s *Server) getMetrics() []byte {
 	response, err := http.Get(s.PushGateway.MetricsURL)
 	if err != nil {
-		log.Error(err, "Failed getting Prometheus metrics")
+		log.Error(err, "Failed getting metrics from Pushgateway")
 	}
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {
-			log.Error(err, "Failed closing Prometheus response body")
+			log.Error(err, "Failed closing metrics response body")
 		}
 	}()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Error(err, "Failed reading Prometheus response body")
+		log.Error(err, "Failed reading metrics response body")
 	}
 
 	return body
@@ -237,20 +253,19 @@ func (s *Server) getPushGatewayURL() string {
 	if s.PushGateway.Job == "" {
 		s.PushGateway.Job = "gin"
 	}
-	return s.PushGateway.GatewayURL + "/metrics/job/" + s.PushGateway.Job + "/instance/" + h
+	return s.PushGateway.PushGatewayURL + "/metrics/job/" + s.PushGateway.Job + "/instance/" + h
 }
 
 func (s *Server) sendMetricsToPushGateway(metrics []byte) {
 	req, err := http.NewRequest("POST", s.getPushGatewayURL(), bytes.NewBuffer(metrics))
 	client := &http.Client{}
-	_, err = client.Do(req)
-	if err != nil {
+	if _, err = client.Do(req); err != nil {
 		log.Error(err, "Failed sending Prometheus metrics to Pushgateway")
 	}
 }
 
 func (s *Server) startPushTicker() {
-	ticker := time.NewTicker(time.Second * s.PushGateway.IntervalSeconds)
+	ticker := time.NewTicker(time.Second * s.PushGateway.PushIntervalSeconds)
 	go func() {
 		for range ticker.C {
 			s.sendMetricsToPushGateway(s.getMetrics())
@@ -335,6 +350,7 @@ func NewMetric(m *Metric, subsystem string) prometheus.Collector {
 }
 
 func (s *Server) registerMetrics(subsystem string) {
+
 	for _, metricDef := range s.MetricsList {
 		metric := NewMetric(metricDef, subsystem)
 		if err := prometheus.Register(metric); err != nil {
@@ -344,7 +360,7 @@ func (s *Server) registerMetrics(subsystem string) {
 		case reqCnt:
 			s.reqCnt = metric.(*prometheus.CounterVec)
 		case reqDur:
-			s.reqDur = metric.(prometheus.Summary)
+			s.reqDur = metric.(*prometheus.HistogramVec)
 		case resSz:
 			s.resSz = metric.(prometheus.Summary)
 		case reqSz:
@@ -354,30 +370,23 @@ func (s *Server) registerMetrics(subsystem string) {
 	}
 }
 
-// Use adds the middleware to a gin engine.
-func (s *Server) Use(e *gin.Engine, metricsPath string) {
+// Monitor registers a gin engine to monitor using the specified metrics path.
+// The gin engine will adds the prometheus server metrics handler to its middleware.
+func (s *Server) Monitor(e *gin.Engine, metricsPath string) {
 	e.Use(s.handlerFunc(metricsPath))
 	s.setMetricsPath(e, metricsPath)
 }
 
-// UseWithCustomMetrics adds the middleware to a gin engine with custom metrics.
-func (s *Server) UseWithCustomMetrics(e *gin.Engine, gatherer prometheus.Gatherers, metricsPath string) {
-	s.setMetricsPathWithCustomMetrics(e, gatherer, metricsPath)
-}
-
-func (s *Server) setMetricsPathWithCustomMetrics(e *gin.Engine, gatherer prometheus.Gatherers, metricsPath string) {
-	s.Router.GET(metricsPath, prometheusHandlerFor(gatherer))
-}
-
-// UseWithAuth adds the middleware to a gin engine with BasicAuth.
-func (s *Server) UseWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
+// MonitorWithAuth registers a gin engine to monitor with BasicAuth and using the specified metrics path.
+// The gin engine will adds the prometheus server metrics handler to its middleware.
+func (s *Server) MonitorWithAuth(e *gin.Engine, accounts gin.Accounts, metricsPath string) {
 	e.Use(s.handlerFunc(metricsPath))
 	s.setMetricsPathWithAuth(e, accounts, metricsPath)
 }
 
 func (s *Server) handlerFunc(metricsPath string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.String() == metricsPath {
+		if c.Request.URL.Path == metricsPath {
 			c.Next()
 			return
 		}
@@ -391,9 +400,17 @@ func (s *Server) handlerFunc(metricsPath string) gin.HandlerFunc {
 		elapsed := float64(time.Since(start)) / float64(time.Second)
 		resSz := float64(c.Writer.Size())
 
-		s.reqDur.Observe(elapsed)
 		url := s.ReqCntURLLabelMappingFn(c)
-		s.reqCnt.WithLabelValues(status, c.Request.Method, c.Request.Host, url).Inc()
+		// jlambert Oct 2018 - sidecar specific mod
+		if len(s.URLLabelFromContext) > 0 {
+			u, found := c.Get(s.URLLabelFromContext)
+			if !found {
+				u = "unknown"
+			}
+			url = u.(string)
+		}
+		s.reqDur.WithLabelValues(status, c.Request.Method, c.HandlerName(), c.Request.Host, url).Observe(elapsed)
+		s.reqCnt.WithLabelValues(status, c.Request.Method, c.HandlerName(), c.Request.Host, url).Inc()
 		s.reqSz.Observe(float64(reqSz))
 		s.resSz.Observe(resSz)
 	}
@@ -406,18 +423,11 @@ func prometheusHandler() gin.HandlerFunc {
 	}
 }
 
-func prometheusHandlerFor(gatherer prometheus.Gatherers) gin.HandlerFunc {
-	h := promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{})
-	return func(c *gin.Context) {
-		h.ServeHTTP(c.Writer, c.Request)
-	}
-}
-
 // From https://github.com/DanielHeckrath/gin-prometheus/blob/master/gin_prometheus.go
 func computeApproximateRequestSize(r *http.Request) int {
 	s := 0
 	if r.URL != nil {
-		s = len(r.URL.String())
+		s = len(r.URL.Path)
 	}
 
 	s += len(r.Method)
