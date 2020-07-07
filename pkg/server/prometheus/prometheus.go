@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+	httpserver "github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
 	"github.com/slok/go-http-metrics/middleware"
 	ginmiddleware "github.com/slok/go-http-metrics/middleware/gin"
@@ -22,27 +22,27 @@ type Server struct {
 
 // Target defines a target gin engine to monitor.
 type Target struct {
-	Engine        *gin.Engine
+	HTTPServer    *httpserver.Server
 	MetricsPrefix string
 }
 
 // NewServer creates new Prometheus server.
 func NewServer(port, path string) *Server {
-	mux := http.NewServeMux()
-	mux.Handle(path, promhttp.Handler())
-
 	return &Server{
-		http: &http.Server{
-			Addr:    fmt.Sprintf(":%s", port),
-			Handler: mux,
-		},
 		Port: port,
+		Path: path,
 	}
 }
 
 // Start starts the HTTP server.
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start Prometheus server on port %s", s.Port))
+	mux := http.NewServeMux()
+	mux.Handle(s.Path, promhttp.Handler())
+	s.http = &http.Server{
+		Addr:    fmt.Sprintf(":%s", s.Port),
+		Handler: mux,
+	}
 	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -65,7 +65,8 @@ func (s *Server) Monitor(targets ...*Target) {
 			Recorder: metrics.NewRecorder(metrics.Config{
 				Prefix: t.MetricsPrefix,
 			}),
+			Service: fmt.Sprintf("localhost:%s", t.HTTPServer.Port),
 		})
-		t.Engine.Use(ginmiddleware.Handler("", mdlw))
+		t.HTTPServer.AddMiddleware(ginmiddleware.Handler("", mdlw))
 	}
 }

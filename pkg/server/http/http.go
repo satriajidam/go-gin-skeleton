@@ -13,9 +13,10 @@ import (
 
 // Server represents the implementation of HTTP server object.
 type Server struct {
-	http   *http.Server
-	Router *gin.Engine
-	Port   string
+	http        *http.Server
+	Router      *gin.Engine
+	Port        string
+	middlewares []gin.HandlerFunc
 }
 
 // NewServer creates new HTTP server.
@@ -26,28 +27,33 @@ func NewServer(port string, disallowUnknownJSONFields bool) *Server {
 
 	router := gin.New()
 
-	// Setup middlewares.
-	router.Use(
-		gin.Recovery(),
-		requestid.New(),
-		logger.New(port),
-	)
-
 	loadPredefinedRoutes(router)
 
 	return &Server{
-		http: &http.Server{
-			Addr:    fmt.Sprintf(":%s", port),
-			Handler: router,
-		},
 		Router: router,
 		Port:   port,
+		middlewares: []gin.HandlerFunc{
+			// Default gin middlewares.
+			gin.Recovery(),
+			requestid.New(),
+			logger.New(port),
+		},
 	}
+}
+
+// AddMiddleware adds a gin middleware the HTTP server.
+func (s *Server) AddMiddleware(h gin.HandlerFunc) {
+	s.middlewares = append(s.middlewares, h)
 }
 
 // Start starts the HTTP server.
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
+	s.Router.Use(s.middlewares...)
+	s.http = &http.Server{
+		Addr:    fmt.Sprintf(":%s", s.Port),
+		Handler: s.Router,
+	}
 	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}

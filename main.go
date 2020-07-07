@@ -36,7 +36,7 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			Engine:        httpServer.Router,
+			HTTPServer:    httpServer,
 			MetricsPrefix: "http",
 		},
 	)
