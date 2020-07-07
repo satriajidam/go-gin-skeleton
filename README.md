@@ -11,4 +11,5 @@ A skeleton project for building RESTful API with Go &amp; Gin using Clean Archit
 * KV Store Abstrction: [philippgille/gokv](https://github.com/philippgille/gokv)
 * Logging: [rs/zerolog](https://github.com/rs/zerolog)
 * Prometheus: [prometheus/client_golang](https://github.com/prometheus/client_golang)
+* Go HTTP Metrics: [slok/go-http-metrics](https://github.com/slok/go-http-metrics)
 * Validator: [go-playground/validator](github.com/go-playground/validator)

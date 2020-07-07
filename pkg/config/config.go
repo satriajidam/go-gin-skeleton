@@ -25,9 +25,9 @@ type Config struct {
 	HTTPServerDisallowUnknownJSONFields bool   `envconfig:"HTTP_SERVER_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
 
 	// Prometheus Server configurations.
-	PrometheusServerPort             string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
-	PrometheusServerMetricsPath      string `envconfig:"PROMETHEUS_SERVER_METRICS_PATH" default:"/metrics"`
-	PrometheusServerMetricsSubsystem string `envconfig:"PROMETHEUS_SERVER_METRICS_SUBSYSTEM" default:"http"`
+	PrometheusServerPort          string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
+	PrometheusServerMetricsPath   string `envconfig:"PROMETHEUS_SERVER_METRICS_PATH" default:"/metrics"`
+	PrometheusServerMetricsPrefix string `envconfig:"PROMETHEUS_SERVER_METRICS_PREFIX" default:"http"`
 
 	// MySQL database configurations.
 	MySQLHost     string `envconfig:"MYSQL_HOST" default:"127.0.0.1"`

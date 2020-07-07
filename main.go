@@ -31,11 +31,15 @@ func main() {
 
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
-		cfg.PrometheusServerMetricsSubsystem,
-		[]string{},
+		cfg.PrometheusServerMetricsPath,
 	)
 
-	promServer.Monitor(httpServer.Router, cfg.PrometheusServerMetricsPath)
+	promServer.Monitor(
+		&prometheus.Target{
+			Engine:        httpServer.Router,
+			MetricsPrefix: "http",
+		},
+	)
 
 	server.RunServersGracefully(cfg.GracefulTimeout, promServer, httpServer)
 }
