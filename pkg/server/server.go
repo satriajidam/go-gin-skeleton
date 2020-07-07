@@ -22,6 +22,10 @@ func init() {
 	if config.IsReleaseMode() {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	if config.Get().GinDisallowUnknownJSONFields {
+		gin.EnableJsonDecoderDisallowUnknownFields()
+	}
 }
 
 // StartServers starts all given servers.

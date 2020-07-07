@@ -16,38 +16,21 @@ type predefinedRoute struct {
 // List of predefined routes.
 // They can be overwritten by re-declaring the same relative path but with different handler function
 // on the HTTP server object's router.
-var predefinedRoutes = []predefinedRoute{
+var predefinedRoutes = []route{
 	{
-		httpMethod:    http.MethodGet,
-		relateivePath: "/_/status/:code",
-		handlerFunc:   simulateStatusCode,
+		method:       http.MethodGet,
+		relativePath: "/_/status/:code",
+		handlers:     []gin.HandlerFunc{simulateStatusCode},
 	},
 	{
-		httpMethod:    http.MethodPost,
-		relateivePath: "/_/status/:code",
-		handlerFunc:   simulateStatusCode,
+		method:       http.MethodPost,
+		relativePath: "/_/status/:code",
+		handlers:     []gin.HandlerFunc{simulateStatusCode},
 	},
 }
 
 func loadPredefinedRoutes(router *gin.Engine) {
-	for _, route := range predefinedRoutes {
-		switch route.httpMethod {
-		case http.MethodGet:
-			router.GET(route.relateivePath, route.handlerFunc)
-		case http.MethodHead:
-			router.HEAD(route.relateivePath, route.handlerFunc)
-		case http.MethodPost:
-			router.POST(route.relateivePath, route.handlerFunc)
-		case http.MethodPut:
-			router.PUT(route.relateivePath, route.handlerFunc)
-		case http.MethodPatch:
-			router.PATCH(route.relateivePath, route.handlerFunc)
-		case http.MethodDelete:
-			router.DELETE(route.relateivePath, route.handlerFunc)
-		case http.MethodOptions:
-			router.OPTIONS(route.relateivePath, route.handlerFunc)
-		}
-	}
+	loadRoutes(router, predefinedRoutes)
 }
 
 func getStatusCodeAndText(code int) (int, string) {

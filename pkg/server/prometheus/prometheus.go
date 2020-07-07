@@ -22,8 +22,7 @@ type Server struct {
 
 // Target defines a target gin engine to monitor.
 type Target struct {
-	HTTPServer    *httpserver.Server
-	MetricsPrefix string
+	HTTPServer *httpserver.Server
 }
 
 // NewServer creates new Prometheus server.
@@ -62,10 +61,8 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *Server) Monitor(targets ...*Target) {
 	for _, t := range targets {
 		mdlw := middleware.New(middleware.Config{
-			Recorder: metrics.NewRecorder(metrics.Config{
-				Prefix: t.MetricsPrefix,
-			}),
-			Service: fmt.Sprintf("localhost:%s", t.HTTPServer.Port),
+			Recorder: metrics.NewRecorder(metrics.Config{}),
+			Service:  fmt.Sprintf("localhost:%s", t.HTTPServer.Port),
 		})
 		t.HTTPServer.AddMiddleware(ginmiddleware.Handler("", mdlw))
 	}

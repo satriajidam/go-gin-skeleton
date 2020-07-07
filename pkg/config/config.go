@@ -20,9 +20,11 @@ type Config struct {
 	// Graceful shutdown timeout in seconds.
 	GracefulTimeout int `envconfig:"GRACEFUL_TIMEOUT" default:"5"`
 
+	// Gin engine specific configs.
+	GinDisallowUnknownJSONFields bool `envconfig:"GIN_DISALLOW_UNKNOWN_JSON_FIELDS" default:"false"`
+
 	// HTTP Server configurations.
-	HTTPServerPort                      string `envconfig:"HTTP_SERVER_PORT" default:"80"`
-	HTTPServerDisallowUnknownJSONFields bool   `envconfig:"HTTP_SERVER_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
+	HTTPServerPort string `envconfig:"HTTP_SERVER_PORT" default:"80"`
 
 	// Prometheus Server configurations.
 	PrometheusServerPort          string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
