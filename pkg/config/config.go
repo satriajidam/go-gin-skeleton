@@ -22,11 +22,7 @@ type Config struct {
 
 	// HTTP Server configurations.
 	HTTPServerPort                      string `envconfig:"HTTP_SERVER_PORT" default:"80"`
-	HTTPServerMode                      string `envconfig:"HTTP_SERVER_MODE" default:"debug"`
 	HTTPServerDisallowUnknownJSONFields bool   `envconfig:"HTTP_SERVER_DISALLOW_UNKNOWN_JSON_FIELDS" default:"true"`
-
-	// GRPC Server configurations.
-	GRPCServerPort string `envconfig:"GRPC_SERVER_PORT" default:"9090"`
 
 	// Prometheus Server configurations.
 	PrometheusServerPort             string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`

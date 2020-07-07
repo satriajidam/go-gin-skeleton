@@ -7,6 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
@@ -14,6 +16,12 @@ import (
 type Server interface {
 	Start() error
 	Stop(ctx context.Context) error
+}
+
+func init() {
+	if config.IsReleaseMode() {
+		gin.SetMode(gin.ReleaseMode)
+	}
 }
 
 // StartServers starts all given servers.

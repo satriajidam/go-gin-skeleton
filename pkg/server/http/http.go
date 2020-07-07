@@ -19,9 +19,7 @@ type Server struct {
 }
 
 // NewServer creates new HTTP server.
-func NewServer(port, mode string, disallowUnknownJSONFields bool) *Server {
-	gin.SetMode(mode)
-
+func NewServer(port string, disallowUnknownJSONFields bool) *Server {
 	if disallowUnknownJSONFields {
 		gin.EnableJsonDecoderDisallowUnknownFields()
 	}

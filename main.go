@@ -26,7 +26,6 @@ func main() {
 
 	httpServer := http.NewServer(
 		cfg.HTTPServerPort,
-		cfg.HTTPServerMode,
 		cfg.HTTPServerDisallowUnknownJSONFields,
 	)
 
