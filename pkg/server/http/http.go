@@ -13,11 +13,12 @@ import (
 
 // Server represents the implementation of HTTP server object.
 type Server struct {
-	http        *http.Server
-	router      *gin.Engine
-	Port        string
-	middlewares []gin.HandlerFunc
-	routes      []route
+	http                   *http.Server
+	router                 *gin.Engine
+	middlewares            []gin.HandlerFunc
+	routes                 []route
+	enablePredefinedRoutes bool
+	Port                   string
 }
 
 type route struct {
@@ -27,16 +28,17 @@ type route struct {
 }
 
 // NewServer creates new HTTP server.
-func NewServer(port string) *Server {
+func NewServer(port string, enablePredefinedRoutes bool) *Server {
 	return &Server{
 		router: gin.New(),
-		Port:   port,
 		middlewares: []gin.HandlerFunc{
 			// Default gin middlewares.
 			gin.Recovery(),
 			requestid.New(),
 			logger.New(port),
 		},
+		enablePredefinedRoutes: enablePredefinedRoutes,
+		Port:                   port,
 	}
 }
 
@@ -70,7 +72,9 @@ func loadRoutes(router *gin.Engine, routes []route) {
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
 	s.router.Use(s.middlewares...)
-	loadPredefinedRoutes(s.router)
+	if s.enablePredefinedRoutes {
+		loadPredefinedRoutes(s.router)
+	}
 	loadRoutes(s.router, s.routes)
 	s.http = &http.Server{
 		Addr:    fmt.Sprintf(":%s", s.Port),

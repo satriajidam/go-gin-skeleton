@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	httpServer := http.NewServer(cfg.HTTPServerPort)
+	httpServer := http.NewServer(cfg.HTTPServerPort, true)
 
 	httpServer.GET("/_health", func(ctx *gin.Context) {
 		ctx.JSON(200, map[string]string{"status": "healthy"})
