@@ -5,6 +5,7 @@ A skeleton project for building RESTful API with Go &amp; Gin using Clean Archit
 ## Dependencies
 
 * Web Framework: [gin-gonic/gin](https://github.com/gin-gonic/gin)
+* REST Client: [go-resty/resty](https://github.com/go-resty/resty)
 * Configuration: [kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig)
 * Test Framework: [stretchr/testify](https://github.com/stretchr/testify)
 * SQL Database ORM: [jinzhu/gorm](https://github.com/jinzhu/gorm)
