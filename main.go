@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
@@ -25,6 +26,16 @@ func main() {
 	}
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true)
+
+	httpServer.GET("/json/provider/:name", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		ctx.JSON(200, map[string]string{"cloudProvider": name})
+	})
+
+	httpServer.GET("/yaml/provider/:name", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		ctx.YAML(200, map[string]string{"cloudProvider": name})
+	})
 
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
