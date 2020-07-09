@@ -1,4 +1,5 @@
-// Package gin is a helper package to get a gin compatible middleware.
+// Package gin is based on https://github.com/slok/go-http-metrics/blob/master/middleware/gin/gin.go
+// with a slight modifications to reduce metrics cardinality.
 package gin
 
 import (
@@ -11,6 +12,11 @@ import (
 // Handler returns a Gin measuring middleware.
 func Handler(paths []string, m middleware.Middleware) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// In order to avoid high cardinality metrics, check each incoming request
+		// path to a list of registered route paths.
+		// This will make path with parameter like /provider/:name recorded as
+		// /provider/:name instead of /provider/aws or /provider/gcp.
+		// Ref: https://github.com/slok/go-http-metrics#custom-handler-id
 		path := c.FullPath()
 		if !contains(path, paths) {
 			return
