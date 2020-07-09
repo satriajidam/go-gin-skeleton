@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
@@ -27,14 +29,17 @@ func main() {
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true)
 
-	httpServer.GET("/json/provider/:name", func(ctx *gin.Context) {
+	httpServer.GET("/provider/:name", func(ctx *gin.Context) {
 		name := ctx.Param("name")
-		ctx.JSON(200, map[string]string{"cloudProvider": name})
-	})
-
-	httpServer.GET("/yaml/provider/:name", func(ctx *gin.Context) {
-		name := ctx.Param("name")
-		ctx.YAML(200, map[string]string{"cloudProvider": name})
+		format, _ := ctx.GetQuery("format")
+		switch format {
+		case "yaml":
+			ctx.YAML(200, map[string]string{"cloudProvider": name})
+		case "json":
+			ctx.JSON(200, map[string]string{"cloudProvider": name})
+		default:
+			ctx.String(200, fmt.Sprintf("provider: %s", name))
+		}
 	})
 
 	promServer := prometheus.NewServer(
