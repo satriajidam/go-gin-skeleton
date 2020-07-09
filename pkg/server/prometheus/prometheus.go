@@ -8,9 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	httpserver "github.com/satriajidam/go-gin-skeleton/pkg/server/http"
+	ginmiddleware "github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus/middleware/gin"
 	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
 	"github.com/slok/go-http-metrics/middleware"
-	ginmiddleware "github.com/slok/go-http-metrics/middleware/gin"
 )
 
 // Server represents the implementation of Prometheus server object.
@@ -73,6 +73,6 @@ func (s *Server) Monitor(targets ...*Target) {
 			DisableMeasureSize:     t.DisableMeasureSize,
 			DisableMeasureInflight: t.DisableMeasureInflight,
 		})
-		t.HTTPServer.AddMiddleware(ginmiddleware.Handler("", mdlw))
+		t.HTTPServer.AddMiddleware(ginmiddleware.Handler(t.HTTPServer.GetRoutePaths(), mdlw))
 	}
 }
