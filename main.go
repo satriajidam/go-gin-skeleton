@@ -44,7 +44,9 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			HTTPServer: httpServer,
+			HTTPServer:         httpServer,
+			GroupedStatus:      true,
+			DisableMeasureSize: true,
 		},
 	)
 

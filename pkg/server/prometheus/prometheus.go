@@ -73,14 +73,6 @@ func (s *Server) Monitor(targets ...*Target) {
 			DisableMeasureSize:     t.DisableMeasureSize,
 			DisableMeasureInflight: t.DisableMeasureInflight,
 		})
-
-		// In order to avoid high cardinality metrics, register each route path to its
-		// own middleware handler using the path as its handler ID.
-		// This will make path with parameter like /provider/:name recorded as
-		// /provider/:name instead of /provider/aws or /provider/gcp.
-		// Ref: https://github.com/slok/go-http-metrics#custom-handler-id
-		for _, p := range t.HTTPServer.GetRoutePaths() {
-			t.HTTPServer.AddMiddleware(ginmiddleware.Handler(p, mdlw))
-		}
+		t.HTTPServer.AddMiddleware(ginmiddleware.Handler("", mdlw))
 	}
 }
