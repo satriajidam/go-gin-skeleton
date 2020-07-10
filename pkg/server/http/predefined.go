@@ -8,12 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type predefinedRoute struct {
-	httpMethod    string
-	relateivePath string
-	handlerFunc   gin.HandlerFunc
-}
-
 // List of predefined routes.
 // They can be overwritten by re-declaring the same relative path but with different handler function
 // on the HTTP server object's router.
@@ -112,9 +106,8 @@ func simulateStatusCode(ctx *gin.Context) {
 
 	if statusCode >= http.StatusInternalServerError &&
 		statusCode <= http.StatusNetworkAuthenticationRequired {
-		ctx.Error(fmt.Errorf(statusText))
+		_ = ctx.Error(fmt.Errorf(statusText))
 	}
 
 	ctx.String(statusCode, statusText)
-	return
 }
