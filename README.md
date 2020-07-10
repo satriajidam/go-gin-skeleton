@@ -14,3 +14,7 @@ A skeleton project for building RESTful API with Go &amp; Gin using Clean Archit
 * Prometheus: [prometheus/client_golang](https://github.com/prometheus/client_golang)
 * Go HTTP Metrics: [slok/go-http-metrics](https://github.com/slok/go-http-metrics)
 * Validator: [go-playground/validator](github.com/go-playground/validator)
+
+## Docker
+
+Use [docker-makefile](https://github.com/mvanholsteijn/docker-makefile) to build docker image with semantic versioning as its tag.
