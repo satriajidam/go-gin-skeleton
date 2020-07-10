@@ -70,7 +70,7 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 
 	output.FormatLevel = func(i interface{}) string {
 		level := strings.ToUpper(fmt.Sprintf("%v", i))
-		logStr := fmt.Sprintf("| %-6s|", level)
+		logStr := fmt.Sprintf("| %s |", level)
 		switch level {
 		case LevelInfo:
 			return fmt.Sprint(aurora.BrightGreen(logStr))
