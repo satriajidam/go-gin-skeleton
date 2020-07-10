@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -108,6 +109,12 @@ func simulateStatusCode(ctx *gin.Context) {
 	}
 
 	statusCode, statusText := getStatusCodeAndText(code)
+
+	if statusCode >= http.StatusInternalServerError &&
+		statusCode <= http.StatusNetworkAuthenticationRequired {
+		ctx.Error(fmt.Errorf(statusText))
+	}
+
 	ctx.String(statusCode, statusText)
 	return
 }
