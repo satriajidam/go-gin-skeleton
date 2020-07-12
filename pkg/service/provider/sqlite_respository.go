@@ -53,7 +53,7 @@ func NewRepository(db *gorm.DB) domain.ProviderRepository {
 	return &repository{db}
 }
 
-// CreateProvider creates new provider or updates if it's already exist.
+// CreateOrUpdateProvider creates new provider or updates if the existing one.
 func (r *repository) CreateOrUpdateProvider(ctx context.Context, p domain.Provider) error {
 	if p.UUID == "" {
 		if err := r.createProvider(ctx, p); err != nil {
