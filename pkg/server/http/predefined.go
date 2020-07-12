@@ -2,8 +2,10 @@ package http
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,6 +23,16 @@ var predefinedRoutes = []route{
 		method:       http.MethodPost,
 		relativePath: "/_/status/:code",
 		handlers:     []gin.HandlerFunc{simulateStatusCode},
+	},
+	{
+		method:       http.MethodGet,
+		relativePath: "/_/latency/:seconds",
+		handlers:     []gin.HandlerFunc{simulateLatency},
+	},
+	{
+		method:       http.MethodPost,
+		relativePath: "/_/latency/:seconds",
+		handlers:     []gin.HandlerFunc{simulateLatency},
 	},
 }
 
@@ -94,7 +106,7 @@ func getStatusCodeAndText(code int) (int, string) {
 	return http.StatusBadRequest, http.StatusText(http.StatusBadRequest)
 }
 
-// simulateStatusCode generates responses based on the given status code.
+// simulateStatusCode simulates response based on the given status code.
 func simulateStatusCode(ctx *gin.Context) {
 	code, err := strconv.Atoi(ctx.Param("code"))
 	if err != nil {
@@ -110,4 +122,19 @@ func simulateStatusCode(ctx *gin.Context) {
 	}
 
 	ctx.String(statusCode, statusText)
+}
+
+// simulateLatency simulates request with N seconds latency.
+func simulateLatency(ctx *gin.Context) {
+	seconds, err := strconv.Atoi(ctx.Param("seconds"))
+	if err != nil {
+		ctx.String(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		return
+	}
+
+	min, max := 1, 5
+	rand.Seed(time.Now().UnixNano())
+	time.Sleep(time.Duration(rand.Intn(max-min+1)+seconds) * time.Second)
+
+	ctx.String(http.StatusOK, http.StatusText(http.StatusOK))
 }

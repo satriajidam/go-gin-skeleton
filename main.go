@@ -1,11 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
-	"time"
-
-	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
@@ -31,26 +26,6 @@ func main() {
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true)
 
-	httpServer.GET("/provider/:name", func(ctx *gin.Context) {
-		name := ctx.Param("name")
-		format, _ := ctx.GetQuery("format")
-		switch format {
-		case "yaml":
-			ctx.YAML(200, map[string]string{"cloudProvider": name})
-		case "json":
-			ctx.JSON(200, map[string]string{"cloudProvider": name})
-		default:
-			ctx.String(200, fmt.Sprintf("provider: %s", name))
-		}
-	})
-
-	httpServer.GET("/highlatency", func(ctx *gin.Context) {
-		min, max := 0, 10
-		rand.Seed(time.Now().UnixNano())
-		time.Sleep(time.Duration(rand.Intn(max-min+1)+5) * time.Second)
-		ctx.String(200, fmt.Sprint("OK"))
-	})
-
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
 		cfg.PrometheusServerMetricsPath,
@@ -58,9 +33,8 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			HTTPServer:         httpServer,
-			GroupedStatus:      true,
-			DisableMeasureSize: true,
+			HTTPServer:    httpServer,
+			GroupedStatus: true,
 		},
 	)
 
