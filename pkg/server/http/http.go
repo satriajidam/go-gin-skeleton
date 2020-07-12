@@ -13,6 +13,7 @@ import (
 
 // Server represents the implementation of HTTP server object.
 type Server struct {
+	RouterGroup
 	http        *http.Server
 	router      *gin.Engine
 	middlewares []gin.HandlerFunc
@@ -34,7 +35,7 @@ func NewServer(port string, enablePredefinedRoutes bool) *Server {
 		routes = append(routes, predefinedRoutes...)
 	}
 
-	return &Server{
+	server := &Server{
 		router: gin.New(),
 		middlewares: []gin.HandlerFunc{
 			// Default gin middlewares.
@@ -45,6 +46,12 @@ func NewServer(port string, enablePredefinedRoutes bool) *Server {
 		routes: routes,
 		Port:   port,
 	}
+
+	server.RouterGroup = RouterGroup{
+		server: server,
+	}
+
+	return server
 }
 
 // AddMiddleware adds a gin middleware the HTTP server.
@@ -106,7 +113,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-// POST registers HTTP server endpoint with Post method .
+// POST registers HTTP server endpoint with Post method.
 func (s *Server) POST(relativePath string, handlers ...gin.HandlerFunc) {
 	s.routes = append(s.routes, route{
 		method:       http.MethodPost,
@@ -167,4 +174,53 @@ func (s *Server) HEAD(relativePath string, handlers ...gin.HandlerFunc) {
 		relativePath: relativePath,
 		handlers:     handlers,
 	})
+}
+
+// RouterGroup groups path under one path prefix.
+type RouterGroup struct {
+	prefix string
+	server *Server
+}
+
+// Group creates new RouterGroup with the given path prefix.
+func (rg *RouterGroup) Group(prefix string) *RouterGroup {
+	return &RouterGroup{
+		prefix: prefix,
+		server: rg.server,
+	}
+}
+
+// POST registers HTTP server endpoint with Post method.
+func (rg *RouterGroup) POST(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.POST(rg.prefix+relativePath, handlers...)
+}
+
+// GET registers HTTP server endpoint with Get method.
+func (rg *RouterGroup) GET(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.GET(rg.prefix+relativePath, handlers...)
+}
+
+// DELETE registers HTTP server endpoint with Delete method.
+func (rg *RouterGroup) DELETE(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.DELETE(rg.prefix+relativePath, handlers...)
+}
+
+// PATCH registers HTTP server endpoint with Patch method.
+func (rg *RouterGroup) PATCH(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.PATCH(rg.prefix+relativePath, handlers...)
+}
+
+// PUT registers HTTP server endpoint with Put method.
+func (rg *RouterGroup) PUT(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.PUT(rg.prefix+relativePath, handlers...)
+}
+
+// OPTIONS registers HTTP server endpoint with Options method.
+func (rg *RouterGroup) OPTIONS(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.OPTIONS(rg.prefix+relativePath, handlers...)
+}
+
+// HEAD registers HTTP server endpoint with Head method.
+func (rg *RouterGroup) HEAD(relativePath string, handlers ...gin.HandlerFunc) {
+	rg.server.HEAD(rg.prefix+relativePath, handlers...)
 }

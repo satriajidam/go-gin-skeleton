@@ -20,12 +20,28 @@ func main() {
 		SingularTable: cfg.SQLiteSingularTable,
 		DebugMode:     cfg.SQLiteDebugMode,
 	})
-	defer dbconn.Close()
+	defer func() {
+		err := dbconn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	if err != nil {
 		panic(err)
 	}
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true)
+
+	providerRepository := provider.NewRepository(dbconn)
+	providerService := provider.NewService(providerRepository)
+	providerHTTPHandler := provider.NewHTTPHandler(providerService)
+
+	v1 := httpServer.Group("/v1")
+	v1.POST("/provider", providerHTTPHandler.CreateProvider)
+	v1.PUT("/provider/:uuid", providerHTTPHandler.UpdateProvider)
+	v1.DELETE("/provider/:uuid", providerHTTPHandler.DeleteProviderByUUID)
+	v1.GET("/provider/:uuid", providerHTTPHandler.GetProviderByUUID)
+	v1.GET("/providers", providerHTTPHandler.ListProviders)
 
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
@@ -34,20 +50,9 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			HTTPServer:    httpServer,
-			GroupedStatus: true,
+			HTTPServer: httpServer,
 		},
 	)
-
-	providerRepository := provider.NewRepository(dbconn)
-	providerService := provider.NewService(providerRepository)
-	providerHTTPHandler := provider.NewHTTPHandler(providerService)
-
-	httpServer.POST("/v1/provider", providerHTTPHandler.CreateProvider)
-	httpServer.PUT("/v1/provider/:uuid", providerHTTPHandler.UpdateProvider)
-	httpServer.DELETE("/v1/provider/:uuid", providerHTTPHandler.DeleteProviderByUUID)
-	httpServer.GET("/v1/provider/:uuid", providerHTTPHandler.GetProviderByUUID)
-	httpServer.GET("/v1/providers", providerHTTPHandler.ListProviders)
 
 	server.RunServersGracefully(cfg.GracefulTimeout, promServer, httpServer)
 }
