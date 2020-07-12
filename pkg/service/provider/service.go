@@ -54,13 +54,13 @@ func (s *service) UpdateProvider(ctx context.Context, uuid, shortName, longName 
 		return err
 	}
 
-	if conflicting != nil {
-		return domain.ErrConflict
-	}
-
 	existing, err := s.GetProviderByUUID(ctx, uuid)
 	if err != nil {
 		return err
+	}
+
+	if conflicting != nil && conflicting.UUID != existing.UUID {
+		return domain.ErrConflict
 	}
 
 	if shortName != "" {
