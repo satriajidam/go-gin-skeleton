@@ -66,7 +66,7 @@ func RunServersGracefully(timeout int, servers ...Server) {
 	// - https://medium.com/honestbee-tw-engineer/gracefully-shutdown-in-go-http-server-5f5e6b83da5a
 	// Wait for interrupt signal to gracefully shutdown the server.
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	// Set graceful shutdown timeout to configured seconds.
