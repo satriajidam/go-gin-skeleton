@@ -92,7 +92,7 @@ type CreateProviderReq struct {
 // CreateProvider creates new provider.
 func (h *HTTPHandler) CreateProvider(ctx *gin.Context) {
 	var req CreateProviderReq
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody(), err)
 		return
 	}
@@ -124,7 +124,7 @@ func (h *HTTPHandler) UpdateProvider(ctx *gin.Context) {
 	}
 
 	var req UpdateProviderReq
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody(), err)
 		return
 	}
