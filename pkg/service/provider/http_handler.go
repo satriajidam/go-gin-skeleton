@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	actionGet     = "retrieving"
 	actionCreate  = "creating"
 	actionUpdate  = "updating"
 	actionDelete  = "deleting"
@@ -17,11 +18,12 @@ const (
 	statusFailed  = "failed"
 )
 
-// Handler provides methods for interacting with provider handler.
+// Handler provides methods for interacting with provider HTTP handler.
 type HTTPHandler struct {
 	service domain.ProviderService
 }
 
+// NewHTTPHandler creates new provider HTTP handler.
 func NewHTTPHandler(service domain.ProviderService) *HTTPHandler {
 	return &HTTPHandler{service}
 }
@@ -30,8 +32,16 @@ func failedMsgInvalidBody() string {
 	return "Invalid request body"
 }
 
-func failedMsgEmptyUUID() string {
-	return "Empty 'uuid' path parameter"
+func failedMsgMissingUUID() string {
+	return "Missing 'uuid' path parameter"
+}
+
+func failedMsgEmptyPayload() string {
+	return "Empty payload"
+}
+
+func failedMsgInvalidLimit() string {
+	return "Invalid 'limit' query parameter"
 }
 
 func failedMsgShortNameExists(shortName string) string {
@@ -42,14 +52,25 @@ func failedMsgUUIDNotFound(uuid string) string {
 	return fmt.Sprintf("Provider with '%s' UUID doesn't exist", uuid)
 }
 
-func (h *HTTPHandler) responseFailed(ctx *gin.Context, code int, msg string) {
+func failedMsgProviderAction(action string) string {
+	return fmt.Sprintf("Failed %s provider", action)
+}
+
+func successMsgProviderAction(action string) string {
+	return fmt.Sprintf("Success %s provider", action)
+}
+
+func responseFailed(ctx *gin.Context, code int, msg string, err error) {
+	if err != nil {
+		_ = ctx.Error(err)
+	}
 	ctx.JSON(code, map[string]interface{}{
 		"status":  statusFailed,
 		"message": msg,
 	})
 }
 
-func (h *HTTPHandler) responseSuccess(ctx *gin.Context, code int, msg string, data interface{}) {
+func responseSuccess(ctx *gin.Context, code int, msg string, data interface{}) {
 	respMap := map[string]interface{}{
 		"status":  statusSuccess,
 		"message": msg,
@@ -62,6 +83,7 @@ func (h *HTTPHandler) responseSuccess(ctx *gin.Context, code int, msg string, da
 	ctx.JSON(code, respMap)
 }
 
+// CreateProviderReq represents JSON request for creating new provider.
 type CreateProviderReq struct {
 	ShortName string `json:"shortName" binding:"required"`
 	LongName  string `json:"longName" binding:"required"`
@@ -71,25 +93,23 @@ type CreateProviderReq struct {
 func (h *HTTPHandler) CreateProvider(ctx *gin.Context) {
 	var req CreateProviderReq
 	if err := ctx.ShouldBind(&req); err != nil {
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody())
+		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody(), err)
 		return
 	}
 
 	if err := h.service.CreateProvider(ctx, req.ShortName, req.LongName); err != nil {
 		if err == domain.ErrConflict {
-			_ = ctx.Error(err)
-			h.responseFailed(ctx, http.StatusBadRequest, failedMsgShortNameExists(req.ShortName))
+			responseFailed(ctx, http.StatusBadRequest, failedMsgShortNameExists(req.ShortName), err)
 			return
 		}
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed %s new provider", actionCreate))
+		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionCreate), err)
 		return
 	}
 
-	h.responseSuccess(ctx, http.StatusCreated, fmt.Sprintf("Success %s new provider", actionCreate), nil)
+	responseSuccess(ctx, http.StatusCreated, successMsgProviderAction(actionCreate), nil)
 }
 
+// UpdateProviderReq represents JSON request for updating existing provider.
 type UpdateProviderReq struct {
 	ShortName string `json:"shortName"`
 	LongName  string `json:"longName"`
@@ -99,69 +119,59 @@ type UpdateProviderReq struct {
 func (h *HTTPHandler) UpdateProvider(ctx *gin.Context) {
 	uuid := ctx.Param("uuid")
 	if uuid == "" {
-		_ = ctx.Error(fmt.Errorf(failedMsgEmptyUUID()))
-		h.responseFailed(ctx, http.StatusBadRequest, failedMsgEmptyUUID())
+		responseFailed(ctx, http.StatusBadRequest, failedMsgMissingUUID(), nil)
 		return
 	}
 
 	var req UpdateProviderReq
 	if err := ctx.ShouldBind(&req); err != nil {
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody())
+		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody(), err)
 		return
 	}
 
 	if req.ShortName == "" && req.LongName == "" {
-		errMsg := "Empty payload"
-		_ = ctx.Error(fmt.Errorf(errMsg))
-		h.responseFailed(ctx, http.StatusBadRequest, errMsg)
+		responseFailed(ctx, http.StatusBadRequest, failedMsgEmptyPayload(), nil)
 		return
 	}
 
 	if err := h.service.UpdateProvider(ctx, uuid, req.ShortName, req.LongName); err != nil {
 		if err == domain.ErrConflict {
-			_ = ctx.Error(err)
-			h.responseFailed(ctx, http.StatusBadRequest, failedMsgShortNameExists(req.ShortName))
+			responseFailed(ctx, http.StatusBadRequest, failedMsgShortNameExists(req.ShortName), err)
 			return
 		}
 		if err == domain.ErrNotFound {
-			_ = ctx.Error(err)
-			h.responseFailed(ctx, http.StatusNotFound, failedMsgUUIDNotFound(uuid))
+			responseFailed(ctx, http.StatusNotFound, failedMsgUUIDNotFound(uuid), err)
 			return
 		}
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed %s existing provider", actionUpdate))
+		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionUpdate), err)
 		return
 	}
 
-	h.responseSuccess(ctx, http.StatusOK, fmt.Sprintf("Success %s existing provider", actionUpdate), nil)
+	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionUpdate), nil)
 }
 
-// GetProviderByUUID gets a provider based on its UUID.
+// GetProviderByUUID retrieves a provider based on its UUID.
 func (h *HTTPHandler) GetProviderByUUID(ctx *gin.Context) {
 	uuid := ctx.Param("uuid")
 	if uuid == "" {
-		_ = ctx.Error(fmt.Errorf(failedMsgEmptyUUID()))
-		h.responseFailed(ctx, http.StatusBadRequest, failedMsgEmptyUUID())
+		responseFailed(ctx, http.StatusBadRequest, failedMsgMissingUUID(), nil)
 		return
 	}
 
 	p, err := h.service.GetProviderByUUID(ctx, uuid)
 	if err != nil {
 		if err == domain.ErrNotFound {
-			_ = ctx.Error(err)
-			h.responseFailed(ctx, http.StatusNotFound, failedMsgUUIDNotFound(uuid))
+			responseFailed(ctx, http.StatusNotFound, failedMsgUUIDNotFound(uuid), err)
 			return
 		}
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusInternalServerError, "Failed retrieving provider")
+		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionGet), err)
 		return
 	}
 
-	h.responseSuccess(ctx, http.StatusOK, "Success retrieving provider", p)
+	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionGet), p)
 }
 
-// ListProviders lists all providers.
+// ListProviders retrieves all providers.
 func (h *HTTPHandler) ListProviders(ctx *gin.Context) {
 	limitStr, ok := ctx.GetQuery("limit")
 	if !ok {
@@ -170,40 +180,35 @@ func (h *HTTPHandler) ListProviders(ctx *gin.Context) {
 
 	limitInt, err := strconv.Atoi(limitStr)
 	if err != nil {
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusBadRequest, "Invalid 'limit' query parameter")
+		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidLimit(), err)
 		return
 	}
 
 	ps, err := h.service.ListProviders(ctx, limitInt)
 	if err != nil {
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusInternalServerError, "Failed retrieving providers")
+		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionGet), err)
 		return
 	}
 
-	h.responseSuccess(ctx, http.StatusOK, "Success retrieving providers", ps)
+	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionGet), ps)
 }
 
 // DeleteProviderByUUID deletes existing provider based on its UUID.
 func (h *HTTPHandler) DeleteProviderByUUID(ctx *gin.Context) {
 	uuid := ctx.Param("uuid")
 	if uuid == "" {
-		_ = ctx.Error(fmt.Errorf(failedMsgEmptyUUID()))
-		h.responseFailed(ctx, http.StatusBadRequest, failedMsgEmptyUUID())
+		responseFailed(ctx, http.StatusBadRequest, failedMsgMissingUUID(), nil)
 		return
 	}
 
 	if err := h.service.DeleteProviderByUUID(ctx, uuid); err != nil {
 		if err == domain.ErrNotFound {
-			_ = ctx.Error(err)
-			h.responseFailed(ctx, http.StatusNotFound, failedMsgUUIDNotFound(uuid))
+			responseFailed(ctx, http.StatusNotFound, failedMsgUUIDNotFound(uuid), err)
 			return
 		}
-		_ = ctx.Error(err)
-		h.responseFailed(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed %s existing provider", actionDelete))
+		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionDelete), err)
 		return
 	}
 
-	h.responseSuccess(ctx, http.StatusOK, fmt.Sprintf("Success %s existing provider", actionDelete), nil)
+	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionDelete), nil)
 }

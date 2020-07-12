@@ -35,14 +35,6 @@ func (pm *ProviderSQLiteModel) toProvider() *domain.Provider {
 	}
 }
 
-func providerToProviderSQLiteModel(p domain.Provider) *ProviderSQLiteModel {
-	return &ProviderSQLiteModel{
-		UUID:      p.UUID,
-		ShortName: p.ShortName,
-		LongName:  p.LongName,
-	}
-}
-
 type repository struct {
 	db *gorm.DB
 }

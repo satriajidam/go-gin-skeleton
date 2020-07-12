@@ -7,6 +7,7 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
+	"github.com/satriajidam/go-gin-skeleton/pkg/service/provider"
 )
 
 func main() {
@@ -37,6 +38,16 @@ func main() {
 			GroupedStatus: true,
 		},
 	)
+
+	providerRepository := provider.NewRepository(dbconn)
+	providerService := provider.NewService(providerRepository)
+	providerHTTPHandler := provider.NewHTTPHandler(providerService)
+
+	httpServer.POST("/v1/provider", providerHTTPHandler.CreateProvider)
+	httpServer.PUT("/v1/provider/:uuid", providerHTTPHandler.UpdateProvider)
+	httpServer.DELETE("/v1/provider/:uuid", providerHTTPHandler.DeleteProviderByUUID)
+	httpServer.GET("/v1/provider/:uuid", providerHTTPHandler.GetProviderByUUID)
+	httpServer.GET("/v1/providers", providerHTTPHandler.ListProviders)
 
 	server.RunServersGracefully(cfg.GracefulTimeout, promServer, httpServer)
 }
