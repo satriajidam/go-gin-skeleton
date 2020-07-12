@@ -71,10 +71,10 @@ type Config struct {
 	MSSQLSingularTable bool   `envconfig:"MSSQL_SINGULAR_TABLE" default:"false"`
 
 	// SQLite database configurations.
-	SQLiteDatabase      string `envconfig:"SQLITE_DATABASE" default:"/tmp/database.db"`
+	SQLiteDatabase      string `envconfig:"SQLITE_DATABASE" default:"file:database.db?mode=memory&cache=shared"`
 	SQLiteDebugMode     bool   `envconfig:"SQLITE_DEBUG_MODE" default:"true"`
-	SQLiteMaxIdleConns  int    `envconfig:"SQLITE_MAX_IDLE_CONNS" default:"0"`
-	SQLiteMaxOpenConns  int    `envconfig:"SQLITE_MAX_OPEN_CONNS" default:"0"`
+	SQLiteMaxIdleConns  int    `envconfig:"SQLITE_MAX_IDLE_CONNS" default:"1"`
+	SQLiteMaxOpenConns  int    `envconfig:"SQLITE_MAX_OPEN_CONNS" default:"1"`
 	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`
 }
 
