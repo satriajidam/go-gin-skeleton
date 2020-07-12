@@ -137,7 +137,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 			switch {
 			case ctx.Writer.Status() >= http.StatusBadRequest && ctx.Writer.Status() < http.StatusInternalServerError:
 				{
-					dumpStdout.Warn().Timestamp().Msg(msg)
+					dumpStdout.Warn().Timestamp().Str(log.LogFieldError, errMsg).Msg(msg)
 				}
 			case ctx.Writer.Status() >= http.StatusInternalServerError:
 				{
