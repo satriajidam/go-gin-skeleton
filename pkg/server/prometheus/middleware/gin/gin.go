@@ -19,6 +19,7 @@ func Handler(paths []string, m middleware.Middleware) gin.HandlerFunc {
 		// Ref: https://github.com/slok/go-http-metrics#custom-handler-id
 		path := c.FullPath()
 		if !contains(path, paths) {
+			c.Next()
 			return
 		}
 		r := &reporter{c: c}
