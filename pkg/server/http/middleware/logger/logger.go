@@ -88,9 +88,14 @@ func New(port string, config ...Config) gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		ctx.Next()
-		track := true
+		var buf bytes.Buffer
+		tee := io.TeeReader(ctx.Request.Body, &buf)
+		body, _ := ioutil.ReadAll(tee)
+		ctx.Request.Body = ioutil.NopCloser(&buf)
 
+		ctx.Next()
+
+		track := true
 		if _, ok := skip[path]; ok {
 			track = false
 		}
@@ -107,11 +112,6 @@ func New(port string, config ...Config) gin.HandlerFunc {
 			if newConfig.UTC {
 				end = end.UTC()
 			}
-
-			var buf bytes.Buffer
-			tee := io.TeeReader(ctx.Request.Body, &buf)
-			body, _ := ioutil.ReadAll(tee)
-			ctx.Request.Body = ioutil.NopCloser(&buf)
 
 			errMsg := ""
 			if len(ctx.Errors) > 0 {
