@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
@@ -45,50 +44,43 @@ func NewRepository(db *gorm.DB) domain.ProviderRepository {
 	return &repository{db}
 }
 
-// CreateOrUpdateProvider creates new provider or updates if the existing one.
-func (r *repository) CreateOrUpdateProvider(ctx context.Context, p domain.Provider) error {
-	if p.UUID == "" {
-		if err := r.createProvider(ctx, p); err != nil {
-			log.Error(err, "Failed creating new provider")
-			return err
-		}
-	} else {
-		if err := r.updateProvider(ctx, p); err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				log.Warn(fmt.Sprintf("Provider with '%s' UUID doesn't exist", p.UUID))
-				return domain.ErrNotFound
-			}
-			log.Error(err, fmt.Sprintf("Failed updating provider with '%s' UUID", p.UUID))
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *repository) createProvider(ctx context.Context, p domain.Provider) error {
-	return r.db.Create(&ProviderSQLiteModel{
-		UUID:      uuid.New().String(),
+// CreateProvider creates new provider in the database.
+func (r *repository) CreateProvider(ctx context.Context, p domain.Provider) error {
+	if err := r.db.Create(&ProviderSQLiteModel{
+		UUID:      p.UUID,
 		ShortName: p.ShortName,
 		LongName:  p.LongName,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		DeletedAt: nil,
-	}).Error
+	}).Error; err != nil {
+		log.Error(err, "Failed creating new provider")
+		return err
+	}
+	return nil
 }
 
-func (r *repository) updateProvider(ctx context.Context, p domain.Provider) error {
-	return r.db.Model(&ProviderSQLiteModel{}).
-		Where("uuid = ? AND deleted_at IS NULL", p.UUID).
-		Updates(
-			map[string]interface{}{
-				"short_name": p.ShortName,
-				"long_name":  p.LongName,
-				"updated_at": time.Now(),
-			},
-		).Error
+// UpdateProvider updates the existing provider in the database.
+func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) error {
+	if err := r.db.Model(&ProviderSQLiteModel{}).
+		Where("uuid = ? AND deleted_at IS NULL", p.UUID).Updates(
+		map[string]interface{}{
+			"short_name": p.ShortName,
+			"long_name":  p.LongName,
+			"updated_at": time.Now(),
+		},
+	).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			log.Warn(fmt.Sprintf("Provider with '%s' UUID doesn't exist", p.UUID))
+			return domain.ErrNotFound
+		}
+		log.Error(err, fmt.Sprintf("Failed updating provider with '%s' UUID", p.UUID))
+		return err
+	}
+	return nil
 }
 
-// DeleteProviderByUUID deletes existing provider based on its UUID.
+// DeleteProviderByUUID deletes existing provider in the database based on its UUID.
 func (r *repository) DeleteProviderByUUID(ctx context.Context, uuid string) error {
 	if err := r.db.Where("uuid = ?", uuid).Delete(&ProviderSQLiteModel{}).Error; err != nil {
 		log.Error(err, fmt.Sprintf("Failed deleting provider with '%s' UUID", uuid))
@@ -97,7 +89,7 @@ func (r *repository) DeleteProviderByUUID(ctx context.Context, uuid string) erro
 	return nil
 }
 
-// GetProviderByUUID gets a provider based on its UUID.
+// GetProviderByUUID gets a provider in the database based on its UUID.
 func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domain.Provider, error) {
 	var pm ProviderSQLiteModel
 	if err := r.db.Where("uuid = ? AND deleted_at IS NULL", uuid).First(&pm).Error; err != nil {
@@ -111,7 +103,7 @@ func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domai
 	return pm.toProvider(), nil
 }
 
-// GetProviderByShortName gets a provider based on its short name.
+// GetProviderByShortName gets a provider in the database based on its short name.
 func (r *repository) GetProviderByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
 	var pm ProviderSQLiteModel
 	if err := r.db.Where("short_name = ? AND deleted_at IS NULL", shortName).First(&pm).Error; err != nil {
@@ -125,8 +117,8 @@ func (r *repository) GetProviderByShortName(ctx context.Context, shortName strin
 	return pm.toProvider(), nil
 }
 
-// ListProviders lists all providers.
-func (r *repository) ListProviders(ctx context.Context, limit int) ([]domain.Provider, error) {
+// GetProviders gets all providers in the database.
+func (r *repository) GetProviders(ctx context.Context, limit int) ([]domain.Provider, error) {
 	var pms []ProviderSQLiteModel
 	query := r.db
 	if limit > 0 {

@@ -97,7 +97,8 @@ func (h *HTTPHandler) CreateProvider(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.service.CreateProvider(ctx, req.ShortName, req.LongName); err != nil {
+	p, err := h.service.CreateProvider(ctx, req.ShortName, req.LongName)
+	if err != nil {
 		if err == domain.ErrConflict {
 			responseFailed(ctx, http.StatusBadRequest, failedMsgShortNameExists(req.ShortName), err)
 			return
@@ -106,7 +107,7 @@ func (h *HTTPHandler) CreateProvider(ctx *gin.Context) {
 		return
 	}
 
-	responseSuccess(ctx, http.StatusCreated, successMsgProviderAction(actionCreate), nil)
+	responseSuccess(ctx, http.StatusCreated, successMsgProviderAction(actionCreate), p)
 }
 
 // UpdateProviderReq represents JSON request for updating existing provider.
@@ -134,7 +135,8 @@ func (h *HTTPHandler) UpdateProvider(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateProvider(ctx, uuid, req.ShortName, req.LongName); err != nil {
+	p, err := h.service.UpdateProvider(ctx, uuid, req.ShortName, req.LongName)
+	if err != nil {
 		if err == domain.ErrConflict {
 			responseFailed(ctx, http.StatusBadRequest, failedMsgShortNameExists(req.ShortName), err)
 			return
@@ -147,7 +149,7 @@ func (h *HTTPHandler) UpdateProvider(ctx *gin.Context) {
 		return
 	}
 
-	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionUpdate), nil)
+	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionUpdate), p)
 }
 
 // GetProviderByUUID retrieves a provider based on its UUID.
@@ -184,7 +186,7 @@ func (h *HTTPHandler) ListProviders(ctx *gin.Context) {
 		return
 	}
 
-	ps, err := h.service.ListProviders(ctx, limitInt)
+	ps, err := h.service.GetProviders(ctx, limitInt)
 	if err != nil {
 		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionGet), err)
 		return

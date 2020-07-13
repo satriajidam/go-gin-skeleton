@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
+	"github.com/segmentio/ksuid"
 )
 
 type service struct {
@@ -27,40 +28,45 @@ func (s *service) getProviderByShortName(ctx context.Context, shortName string) 
 }
 
 // CreateProvider creates new provider.
-func (s *service) CreateProvider(ctx context.Context, shortName, longName string) error {
+func (s *service) CreateProvider(ctx context.Context, shortName, longName string) (*domain.Provider, error) {
 	conflicting, err := s.getProviderByShortName(ctx, shortName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if conflicting != nil {
-		return domain.ErrConflict
+		return nil, domain.ErrConflict
 	}
 
-	if err := s.repo.CreateOrUpdateProvider(ctx, domain.Provider{
+	p := domain.Provider{
+		UUID:      ksuid.New().String(),
 		ShortName: shortName,
 		LongName:  longName,
-	}); err != nil {
-		return err
 	}
 
-	return nil
+	if err := s.repo.CreateProvider(ctx, p); err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }
 
 // UpdateProvider updates existing provider.
-func (s *service) UpdateProvider(ctx context.Context, uuid, shortName, longName string) error {
+func (s *service) UpdateProvider(
+	ctx context.Context, uuid, shortName, longName string,
+) (*domain.Provider, error) {
 	conflicting, err := s.getProviderByShortName(ctx, shortName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	existing, err := s.GetProviderByUUID(ctx, uuid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if conflicting != nil && conflicting.UUID != existing.UUID {
-		return domain.ErrConflict
+		return nil, domain.ErrConflict
 	}
 
 	if shortName != "" {
@@ -71,11 +77,11 @@ func (s *service) UpdateProvider(ctx context.Context, uuid, shortName, longName 
 		existing.LongName = longName
 	}
 
-	if err := s.repo.CreateOrUpdateProvider(ctx, *existing); err != nil {
-		return err
+	if err := s.repo.UpdateProvider(ctx, *existing); err != nil {
+		return nil, err
 	}
 
-	return nil
+	return existing, nil
 }
 
 // GetProviderByUUID gets a provider based on its UUID.
@@ -87,9 +93,9 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 	return result, nil
 }
 
-// ListProviders lists all providers.
-func (s *service) ListProviders(ctx context.Context, limit int) ([]domain.Provider, error) {
-	results, err := s.repo.ListProviders(ctx, limit)
+// GetProviders gets all providers.
+func (s *service) GetProviders(ctx context.Context, limit int) ([]domain.Provider, error) {
+	results, err := s.repo.GetProviders(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
