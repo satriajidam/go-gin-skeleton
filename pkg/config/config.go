@@ -76,6 +76,10 @@ type Config struct {
 	SQLiteMaxIdleConns  int    `envconfig:"SQLITE_MAX_IDLE_CONNS" default:"1"`
 	SQLiteMaxOpenConns  int    `envconfig:"SQLITE_MAX_OPEN_CONNS" default:"1"`
 	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`
+
+	// External dependencies.
+	PokeAPIAddress string `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api"`
+	PokeAPIVersion string `envconfig:"POKEAPI_VERSION" default:"v2"`
 }
 
 var (

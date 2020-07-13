@@ -2,6 +2,7 @@ package domain
 
 import "context"
 
+// Provider represents a cloud provider entity.
 type Provider struct {
 	UUID      string `json:"uuid"`
 	ShortName string `json:"shortName"`
