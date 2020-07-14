@@ -30,9 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	excludedMonitoringPaths := []string{"/_/health", "/_/status/:code"}
-
-	httpServer := http.NewServer(cfg.HTTPServerPort, true, excludedMonitoringPaths...)
+	httpServer := http.NewServer(cfg.HTTPServerPort, true)
 
 	providerRepository := provider.NewRepository(dbconn, true)
 	providerService := provider.NewService(providerRepository)
@@ -53,7 +51,7 @@ func main() {
 	promServer.Monitor(
 		&prometheus.Target{
 			HTTPServer:   httpServer,
-			ExcludePaths: excludedMonitoringPaths,
+			ExcludePaths: []string{"/_/health"},
 		},
 	)
 

@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,9 +20,8 @@ type Config struct {
 	Stdout *zerolog.Logger
 	Stderr *zerolog.Logger
 	// UTC a boolean stating whether to use UTC time zone or local.
-	UTC            bool
-	SkipPath       []string
-	SkipPathRegexp *regexp.Regexp
+	UTC      bool
+	SkipPath []string
 }
 
 type logFields struct {
@@ -82,6 +80,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		start := time.Now()
 		requestID := requestid.Get(ctx)
+		routePath := ctx.FullPath()
 		path := ctx.Request.URL.Path
 		raw := ctx.Request.URL.RawQuery
 		if raw != "" {
@@ -96,13 +95,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		ctx.Next()
 
 		track := true
-		if _, ok := skip[path]; ok {
-			track = false
-		}
-
-		if track &&
-			newConfig.SkipPathRegexp != nil &&
-			newConfig.SkipPathRegexp.MatchString(path) {
+		if _, ok := skip[routePath]; ok {
 			track = false
 		}
 
