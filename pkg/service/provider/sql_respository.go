@@ -10,8 +10,8 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
 )
 
-// ProviderSQLiteModel is a SQLite database model for provider.
-type ProviderSQLiteModel struct {
+// ProviderSQLModel is a SQL database model for provider.
+type ProviderSQLModel struct {
 	ID        uint       `gorm:"column:id;PRIMARY_KEY"`
 	UUID      string     `gorm:"column:uuid;UNIQUE;UNIQUE_INDEX;NOT NULL"`
 	ShortName string     `gorm:"column:short_name;INDEX;NOT NULL"`
@@ -22,11 +22,11 @@ type ProviderSQLiteModel struct {
 }
 
 // TableName sets provider table name.
-func (pm *ProviderSQLiteModel) TableName() string {
+func (pm *ProviderSQLModel) TableName() string {
 	return "provider"
 }
 
-func (pm *ProviderSQLiteModel) toProvider() *domain.Provider {
+func (pm *ProviderSQLModel) toProvider() *domain.Provider {
 	return &domain.Provider{
 		UUID:      pm.UUID,
 		ShortName: pm.ShortName,
@@ -39,14 +39,16 @@ type repository struct {
 }
 
 // NewRepository creates new provider repository.
-func NewRepository(db *gorm.DB) domain.ProviderRepository {
-	db.AutoMigrate(&ProviderSQLiteModel{})
+func NewRepository(db *gorm.DB, automigrate bool) domain.ProviderRepository {
+	if automigrate {
+		db.AutoMigrate(&ProviderSQLModel{})
+	}
 	return &repository{db}
 }
 
 // CreateProvider creates new provider in the database.
 func (r *repository) CreateProvider(ctx context.Context, p domain.Provider) error {
-	if err := r.db.Create(&ProviderSQLiteModel{
+	if err := r.db.Create(&ProviderSQLModel{
 		UUID:      p.UUID,
 		ShortName: p.ShortName,
 		LongName:  p.LongName,
@@ -62,7 +64,7 @@ func (r *repository) CreateProvider(ctx context.Context, p domain.Provider) erro
 
 // UpdateProvider updates the existing provider in the database.
 func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) error {
-	if err := r.db.Model(&ProviderSQLiteModel{}).
+	if err := r.db.Model(&ProviderSQLModel{}).
 		Where("uuid = ? AND deleted_at IS NULL", p.UUID).Updates(
 		map[string]interface{}{
 			"short_name": p.ShortName,
@@ -82,7 +84,7 @@ func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) erro
 
 // DeleteProviderByUUID deletes existing provider in the database based on its UUID.
 func (r *repository) DeleteProviderByUUID(ctx context.Context, uuid string) error {
-	if err := r.db.Where("uuid = ?", uuid).Delete(&ProviderSQLiteModel{}).Error; err != nil {
+	if err := r.db.Where("uuid = ?", uuid).Delete(&ProviderSQLModel{}).Error; err != nil {
 		log.Error(err, fmt.Sprintf("Failed deleting provider with '%s' UUID", uuid))
 		return err
 	}
@@ -91,7 +93,7 @@ func (r *repository) DeleteProviderByUUID(ctx context.Context, uuid string) erro
 
 // GetProviderByUUID gets a provider in the database based on its UUID.
 func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domain.Provider, error) {
-	var pm ProviderSQLiteModel
+	var pm ProviderSQLModel
 	if err := r.db.Where("uuid = ? AND deleted_at IS NULL", uuid).First(&pm).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			log.Warn(fmt.Sprintf("Provider with '%s' UUID doesn't exist", uuid))
@@ -105,7 +107,7 @@ func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domai
 
 // GetProviderByShortName gets a provider in the database based on its short name.
 func (r *repository) GetProviderByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
-	var pm ProviderSQLiteModel
+	var pm ProviderSQLModel
 	if err := r.db.Where("short_name = ? AND deleted_at IS NULL", shortName).First(&pm).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			log.Warn(fmt.Sprintf("Provider with '%s' short name doesn't exist", shortName))
@@ -119,7 +121,7 @@ func (r *repository) GetProviderByShortName(ctx context.Context, shortName strin
 
 // GetProviders gets all providers in the database.
 func (r *repository) GetProviders(ctx context.Context, limit int) ([]domain.Provider, error) {
-	var pms []ProviderSQLiteModel
+	var pms []ProviderSQLModel
 	query := r.db
 	if limit > 0 {
 		query = query.Limit(limit)

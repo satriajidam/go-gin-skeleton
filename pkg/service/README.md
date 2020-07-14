@@ -2,9 +2,10 @@
 
 This is the directory where all business logic related codes are stored.
 
-There are 2 types of directory here and they encapsulate their own package:
+There are 3 types of directory here and they encapsulate their own package:
 
 - `domain`: this is where all the business domain entities and abstractions are placed.
+- `client`: this is where all clients for communicating with external dependencies are placed.
 - `<entity_name>`: this is where a specific business entity implementation is placed (e.g. `customer`, `provider`, etc.)
 
 ## References

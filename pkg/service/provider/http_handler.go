@@ -60,27 +60,37 @@ func successMsgProviderAction(action string) string {
 	return fmt.Sprintf("Success %s provider", action)
 }
 
+// HTTPResponse represents JSON response for provider HTTP handler.
+type HTTPResponse struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
 func responseFailed(ctx *gin.Context, code int, msg string, err error) {
 	if err != nil {
+		// Attach error to current context to push it to the logger middleware.
 		_ = ctx.Error(err)
 	}
-	ctx.JSON(code, map[string]interface{}{
-		"status":  statusFailed,
-		"message": msg,
+	ctx.JSON(code, HTTPResponse{
+		Status:  statusFailed,
+		Message: msg,
+		Data:    nil,
 	})
 }
 
 func responseSuccess(ctx *gin.Context, code int, msg string, data interface{}) {
-	respMap := map[string]interface{}{
-		"status":  statusSuccess,
-		"message": msg,
+	resp := HTTPResponse{
+		Status:  statusSuccess,
+		Message: msg,
+		Data:    nil,
 	}
 
 	if data != nil {
-		respMap["data"] = data
+		resp.Data = data
 	}
 
-	ctx.JSON(code, respMap)
+	ctx.JSON(code, resp)
 }
 
 // CreateProviderReq represents JSON request for creating new provider.

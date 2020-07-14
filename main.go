@@ -32,7 +32,7 @@ func main() {
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true)
 
-	providerRepository := provider.NewRepository(dbconn)
+	providerRepository := provider.NewRepository(dbconn, true)
 	providerService := provider.NewService(providerRepository)
 	providerHTTPHandler := provider.NewHTTPHandler(providerService)
 
