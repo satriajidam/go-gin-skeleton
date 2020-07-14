@@ -23,10 +23,33 @@ type Server struct {
 // Target defines a target gin engine to monitor.
 type Target struct {
 	HTTPServer             *httpserver.Server
+	ExcludePaths           []string
 	MetricsPrefix          string
 	GroupedStatus          bool
 	DisableMeasureSize     bool
 	DisableMeasureInflight bool
+}
+
+func (t *Target) filterMonitoredPaths(paths []string) []string {
+	included := []string{}
+
+	for _, p := range paths {
+		if t.isExcluded(p) {
+			continue
+		}
+		included = append(included, p)
+	}
+
+	return included
+}
+
+func (t *Target) isExcluded(path string) bool {
+	for _, e := range t.ExcludePaths {
+		if path == e {
+			return true
+		}
+	}
+	return false
 }
 
 // NewServer creates new Prometheus server.
@@ -73,6 +96,10 @@ func (s *Server) Monitor(targets ...*Target) {
 			DisableMeasureSize:     t.DisableMeasureSize,
 			DisableMeasureInflight: t.DisableMeasureInflight,
 		})
-		t.HTTPServer.AddMiddleware(ginmiddleware.Handler(t.HTTPServer.GetRoutePaths(), mdlw))
+		t.HTTPServer.AddMiddleware(
+			ginmiddleware.Handler(
+				t.filterMonitoredPaths(t.HTTPServer.GetRoutePaths()), mdlw,
+			),
+		)
 	}
 }

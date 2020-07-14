@@ -50,7 +50,8 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			HTTPServer: httpServer,
+			HTTPServer:   httpServer,
+			ExcludePaths: []string{"/_/health"},
 		},
 	)
 

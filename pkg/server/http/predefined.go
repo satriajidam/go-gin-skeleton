@@ -16,6 +16,11 @@ import (
 var predefinedRoutes = []route{
 	{
 		method:       http.MethodGet,
+		relativePath: "/_/health",
+		handlers:     []gin.HandlerFunc{healthCheck},
+	},
+	{
+		method:       http.MethodGet,
 		relativePath: "/_/status/:code",
 		handlers:     []gin.HandlerFunc{simulateStatusCode},
 	},
@@ -104,6 +109,11 @@ func getStatusCodeAndText(code int) (int, string) {
 	}
 
 	return http.StatusBadRequest, http.StatusText(http.StatusBadRequest)
+}
+
+// healthCheck is a simple endpoint for checking HTTP server health.
+func healthCheck(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 }
 
 // simulateStatusCode simulates response based on the given status code.
