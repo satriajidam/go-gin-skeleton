@@ -7,6 +7,9 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
+	"github.com/satriajidam/go-gin-skeleton/pkg/service/api"
+	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/http/pokeapi"
+	"github.com/satriajidam/go-gin-skeleton/pkg/service/pokemon"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/provider"
 )
 
@@ -34,7 +37,11 @@ func main() {
 
 	providerRepository := provider.NewRepository(dbconn, true)
 	providerService := provider.NewService(providerRepository)
-	providerHTTPHandler := provider.NewHTTPHandler(providerService)
+	providerHTTPHandler := api.NewProviderHTTPHandler(providerService)
+
+	pokeapiClient := pokeapi.NewClient(cfg.PokeAPIAddressV2, 15)
+	pokemonService := pokemon.NewService(pokeapiClient)
+	pokemonHTTPHandler := api.NewPokemonHTTPHandler(pokemonService)
 
 	v1 := httpServer.Group("/v1")
 	v1.POST("/provider", providerHTTPHandler.CreateProvider)
@@ -42,6 +49,7 @@ func main() {
 	v1.DELETE("/provider/:uuid", providerHTTPHandler.DeleteProviderByUUID)
 	v1.GET("/provider/:uuid", providerHTTPHandler.GetProviderByUUID)
 	v1.GET("/providers", providerHTTPHandler.ListProviders)
+	v1.GET("/pokemon/:name", pokemonHTTPHandler.GetPokemonByName)
 
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,

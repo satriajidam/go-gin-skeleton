@@ -78,8 +78,7 @@ type Config struct {
 	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`
 
 	// External dependencies.
-	PokeAPIAddress string `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api"`
-	PokeAPIVersion string `envconfig:"POKEAPI_VERSION" default:"v2"`
+	PokeAPIAddressV2 string `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api/v2"`
 }
 
 var (
