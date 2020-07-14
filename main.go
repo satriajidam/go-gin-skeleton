@@ -30,7 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	excludedMonitoringPaths := []string{"/_/health"}
+	excludedMonitoringPaths := []string{"/_/health", "/_/status/:code"}
 
 	httpServer := http.NewServer(cfg.HTTPServerPort, true, excludedMonitoringPaths...)
 

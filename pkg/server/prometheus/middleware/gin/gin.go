@@ -11,6 +11,11 @@ import (
 
 // Handler returns a Gin measuring middleware.
 func Handler(paths []string, m middleware.Middleware) gin.HandlerFunc {
+	monitoredPaths := map[string]struct{}{}
+	for _, p := range paths {
+		monitoredPaths[p] = struct{}{}
+	}
+
 	return func(c *gin.Context) {
 		// In order to avoid high cardinality metrics, check each incoming request
 		// path to a list of registered route paths.
@@ -18,7 +23,7 @@ func Handler(paths []string, m middleware.Middleware) gin.HandlerFunc {
 		// /provider/:name instead of /provider/aws or /provider/gcp.
 		// Ref: https://github.com/slok/go-http-metrics#custom-handler-id
 		path := c.FullPath()
-		if !contains(path, paths) {
+		if _, ok := monitoredPaths[path]; !ok {
 			c.Next()
 			return
 		}
@@ -27,15 +32,6 @@ func Handler(paths []string, m middleware.Middleware) gin.HandlerFunc {
 			c.Next()
 		})
 	}
-}
-
-func contains(path string, paths []string) bool {
-	for _, p := range paths {
-		if path == p {
-			return true
-		}
-	}
-	return false
 }
 
 type reporter struct {
