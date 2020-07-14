@@ -28,7 +28,9 @@ type route struct {
 }
 
 // NewServer creates new HTTP server.
-func NewServer(port string, enablePredefinedRoutes bool) *Server {
+// Use loggerSkipPaths to list all endpoint paths that you want to skip from being logged
+// by the logger middleware.
+func NewServer(port string, enablePredefinedRoutes bool, loggerSkipPaths ...string) *Server {
 	routes := []route{}
 
 	if enablePredefinedRoutes {
@@ -41,7 +43,11 @@ func NewServer(port string, enablePredefinedRoutes bool) *Server {
 			// Default gin middlewares.
 			gin.Recovery(),
 			requestid.New(),
-			logger.New(port),
+			logger.New(port, logger.Config{
+				Stdout:   log.Stdout(),
+				Stderr:   log.Stderr(),
+				SkipPath: loggerSkipPaths,
+			}),
 		},
 		routes: routes,
 		Port:   port,
