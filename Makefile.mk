@@ -14,8 +14,8 @@
 #   limitations under the License.
 #
 REGISTRY_HOST=docker.io
-USERNAME=satriajidam
-NAME=go-gin-skeleton
+USERNAME=$(USER)
+NAME=$(shell basename $(CURDIR))
 
 RELEASE_SUPPORT := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.make-release-support
 IMAGE=$(REGISTRY_HOST)/$(USERNAME)/$(NAME)

@@ -7,21 +7,17 @@ COPY go.sum .
 # Copy all source and build it.
 # This layer will be rebuilt whenever a file has changed in the source directory.
 COPY ./ .
-RUN GOOS=linux go build -v -a -mod=readonly -o /bin/go-gin .
+RUN GOOS=linux GOPROXY=https://proxy.golang.org go build -v -a -mod=readonly -o /bin/server .
 
 # Build final image.
 FROM debian:stretch-slim
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
-    apt-transport-https \
     openssl \
-    gnupg2 \
     curl \
-    tar \
-    gzip \
   && update-ca-certificates \
   && apt-get clean && rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
 WORKDIR /app
-COPY --from=builder /bin/go-gin go-gin
-ENTRYPOINT ["./go-gin"]
+COPY --from=builder /bin/server server
+ENTRYPOINT ["./server"]
