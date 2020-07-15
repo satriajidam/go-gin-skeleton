@@ -8,7 +8,7 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/api"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/http/pokeapi"
+	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/pokeapi"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/pokemon"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/provider"
 )
@@ -44,11 +44,15 @@ func main() {
 	pokemonHTTPHandler := api.NewPokemonHTTPHandler(pokemonService)
 
 	v1 := httpServer.Group("/v1")
+
+	// Provider APIs:
 	v1.POST("/provider", providerHTTPHandler.CreateProvider)
 	v1.PUT("/provider/:uuid", providerHTTPHandler.UpdateProvider)
 	v1.DELETE("/provider/:uuid", providerHTTPHandler.DeleteProviderByUUID)
 	v1.GET("/provider/:uuid", providerHTTPHandler.GetProviderByUUID)
-	v1.GET("/providers", providerHTTPHandler.ListProviders)
+	v1.GET("/providers", providerHTTPHandler.GetProviders)
+
+	// Pokemon APIs:
 	v1.GET("/pokemon/:name", pokemonHTTPHandler.GetPokemonByName)
 
 	skipMonitoringPaths := []string{"/_/health"}

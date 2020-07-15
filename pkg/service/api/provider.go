@@ -1,12 +1,15 @@
 package api
 
 import (
-	"fmt"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
+)
+
+const (
+	providerEntity   = "provider"
+	providerEntities = "providers"
 )
 
 // ProviderHTTPHandler provides methods for interacting with provider HTTP handler.
@@ -19,22 +22,6 @@ func NewProviderHTTPHandler(service domain.ProviderService) *ProviderHTTPHandler
 	return &ProviderHTTPHandler{service}
 }
 
-func failedMsgProviderShortNameExists(shortName string) string {
-	return fmt.Sprintf("Provider with '%s' short name already exists", shortName)
-}
-
-func failedMsgProviderUUIDNotFound(uuid string) string {
-	return fmt.Sprintf("Provider with '%s' UUID doesn't exist", uuid)
-}
-
-func failedMsgProviderAction(action string) string {
-	return fmt.Sprintf("Failed %s provider", action)
-}
-
-func successMsgProviderAction(action string) string {
-	return fmt.Sprintf("Success %s provider", action)
-}
-
 // CreateProviderReq represents JSON request for creating new provider.
 type CreateProviderReq struct {
 	ShortName string `json:"shortName" binding:"required"`
@@ -45,21 +32,21 @@ type CreateProviderReq struct {
 func (h *ProviderHTTPHandler) CreateProvider(ctx *gin.Context) {
 	var req CreateProviderReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody(), err)
+		ResponseFailed(ctx, FailedInvalidBody(), err)
 		return
 	}
 
 	p, err := h.service.CreateProvider(ctx, req.ShortName, req.LongName)
 	if err != nil {
 		if err == domain.ErrConflict {
-			responseFailed(ctx, http.StatusBadRequest, failedMsgProviderShortNameExists(req.ShortName), err)
+			ResponseFailed(ctx, FailedEntityConflict(providerEntity, "shortName", req.ShortName), err)
 			return
 		}
-		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionCreate), err)
+		ResponseFailed(ctx, FailedCreateEntity(providerEntity), err)
 		return
 	}
 
-	responseSuccess(ctx, http.StatusCreated, successMsgProviderAction(actionCreate), p)
+	ResponseSuccess(ctx, SuccessCreateEntity(providerEntity, p))
 }
 
 // UpdateProviderReq represents JSON request for updating existing provider.
@@ -72,61 +59,61 @@ type UpdateProviderReq struct {
 func (h *ProviderHTTPHandler) UpdateProvider(ctx *gin.Context) {
 	uuid := ctx.Param("uuid")
 	if uuid == "" {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgMissingParam("uuid"), nil)
+		ResponseFailed(ctx, FailedMissingParam("uuid"), nil)
 		return
 	}
 
 	var req UpdateProviderReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidBody(), err)
+		ResponseFailed(ctx, FailedInvalidBody(), err)
 		return
 	}
 
 	if req.ShortName == "" && req.LongName == "" {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgEmptyPayload(), nil)
+		ResponseFailed(ctx, FailedEmptyPayload(), nil)
 		return
 	}
 
 	p, err := h.service.UpdateProvider(ctx, uuid, req.ShortName, req.LongName)
 	if err != nil {
 		if err == domain.ErrConflict {
-			responseFailed(ctx, http.StatusBadRequest, failedMsgProviderShortNameExists(req.ShortName), err)
+			ResponseFailed(ctx, FailedEntityConflict(providerEntity, "shortName", req.ShortName), err)
 			return
 		}
 		if err == domain.ErrNotFound {
-			responseFailed(ctx, http.StatusNotFound, failedMsgProviderUUIDNotFound(uuid), err)
+			ResponseFailed(ctx, FailedEntityNotFound(providerEntity, "uuid", uuid), err)
 			return
 		}
-		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionUpdate), err)
+		ResponseFailed(ctx, FailedUpdateEntity(providerEntity), err)
 		return
 	}
 
-	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionUpdate), p)
+	ResponseSuccess(ctx, SuccessUpdateEntity(providerEntity, p))
 }
 
 // GetProviderByUUID retrieves a provider based on its UUID.
 func (h *ProviderHTTPHandler) GetProviderByUUID(ctx *gin.Context) {
 	uuid := ctx.Param("uuid")
 	if uuid == "" {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgMissingParam("uuid"), nil)
+		ResponseFailed(ctx, FailedMissingParam("uuid"), nil)
 		return
 	}
 
 	p, err := h.service.GetProviderByUUID(ctx, uuid)
 	if err != nil {
 		if err == domain.ErrNotFound {
-			responseFailed(ctx, http.StatusNotFound, failedMsgProviderUUIDNotFound(uuid), err)
+			ResponseFailed(ctx, FailedEntityNotFound(providerEntity, "uuid", uuid), err)
 			return
 		}
-		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionGet), err)
+		ResponseFailed(ctx, FailedGetEntity(providerEntity), err)
 		return
 	}
 
-	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionGet), p)
+	ResponseSuccess(ctx, SuccessGetEntity(providerEntity, p))
 }
 
-// ListProviders retrieves all providers.
-func (h *ProviderHTTPHandler) ListProviders(ctx *gin.Context) {
+// GetProviders gets all providers.
+func (h *ProviderHTTPHandler) GetProviders(ctx *gin.Context) {
 	limitStr, ok := ctx.GetQuery("limit")
 	if !ok {
 		limitStr = "0"
@@ -134,35 +121,35 @@ func (h *ProviderHTTPHandler) ListProviders(ctx *gin.Context) {
 
 	limitInt, err := strconv.Atoi(limitStr)
 	if err != nil {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgInvalidQuery("limit"), err)
+		ResponseFailed(ctx, FailedInvalidQuery("limit"), err)
 		return
 	}
 
 	ps, err := h.service.GetProviders(ctx, limitInt)
 	if err != nil {
-		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionGet), err)
+		ResponseFailed(ctx, FailedGetEntity(providerEntities), err)
 		return
 	}
 
-	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionGet), ps)
+	ResponseSuccess(ctx, SuccessGetEntity(providerEntities, ps))
 }
 
 // DeleteProviderByUUID deletes existing provider based on its UUID.
 func (h *ProviderHTTPHandler) DeleteProviderByUUID(ctx *gin.Context) {
 	uuid := ctx.Param("uuid")
 	if uuid == "" {
-		responseFailed(ctx, http.StatusBadRequest, failedMsgMissingParam("uuid"), nil)
+		ResponseFailed(ctx, FailedMissingParam("uuid"), nil)
 		return
 	}
 
 	if err := h.service.DeleteProviderByUUID(ctx, uuid); err != nil {
 		if err == domain.ErrNotFound {
-			responseFailed(ctx, http.StatusNotFound, failedMsgProviderUUIDNotFound(uuid), err)
+			ResponseFailed(ctx, FailedEntityNotFound(providerEntity, "uuid", uuid), err)
 			return
 		}
-		responseFailed(ctx, http.StatusInternalServerError, failedMsgProviderAction(actionDelete), err)
+		ResponseFailed(ctx, FailedDeleteEntity(providerEntity), err)
 		return
 	}
 
-	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionDelete), nil)
+	ResponseSuccess(ctx, SuccessDeleteEntity(providerEntity, nil))
 }

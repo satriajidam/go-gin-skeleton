@@ -3,7 +3,7 @@ package pokemon
 import (
 	"context"
 
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/http/pokeapi"
+	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/pokeapi"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
 )
 
