@@ -57,8 +57,6 @@ func main() {
 
 	skipMonitoringPaths := []string{"/_/health"}
 
-	httpServer.LoggerSkipPaths(skipMonitoringPaths...)
-
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
 		cfg.PrometheusServerMetricsPath,
