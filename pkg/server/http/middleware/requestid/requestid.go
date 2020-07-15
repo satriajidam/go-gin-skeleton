@@ -7,7 +7,7 @@ import (
 
 const HeaderXRequestID = "X-Request-ID"
 
-// New initializes the RequestID middleware.
+// New initializes the request ID middleware.
 func New() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Get id from request
@@ -18,6 +18,14 @@ func New() gin.HandlerFunc {
 			ctx.Request.Header.Set(HeaderXRequestID, rid)
 		}
 
+		// Attach the request ID to the response writer.
+		ctx.Header(HeaderXRequestID, rid)
+
 		ctx.Next()
 	}
+}
+
+// Get gets the request ID from the response writer.
+func Get(ctx *gin.Context) string {
+	return ctx.Writer.Header().Get(HeaderXRequestID)
 }
