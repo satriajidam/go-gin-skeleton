@@ -73,7 +73,6 @@ func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) erro
 		},
 	).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			log.Warn(fmt.Sprintf("Provider with '%s' UUID doesn't exist", p.UUID))
 			return domain.ErrNotFound
 		}
 		log.Error(err, fmt.Sprintf("Failed updating provider with '%s' UUID", p.UUID))
@@ -96,7 +95,6 @@ func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domai
 	var pm ProviderSQLModel
 	if err := r.db.Where("uuid = ? AND deleted_at IS NULL", uuid).First(&pm).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			log.Warn(fmt.Sprintf("Provider with '%s' UUID doesn't exist", uuid))
 			return nil, domain.ErrNotFound
 		}
 		log.Error(err, fmt.Sprintf("Failed getting provider with '%s' UUID", uuid))
@@ -110,7 +108,6 @@ func (r *repository) GetProviderByShortName(ctx context.Context, shortName strin
 	var pm ProviderSQLModel
 	if err := r.db.Where("short_name = ? AND deleted_at IS NULL", shortName).First(&pm).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			log.Warn(fmt.Sprintf("Provider with '%s' short name doesn't exist", shortName))
 			return nil, domain.ErrNotFound
 		}
 		log.Error(err, fmt.Sprintf("Failed getting provider with '%s' short name", shortName))
