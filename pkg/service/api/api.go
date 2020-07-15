@@ -140,7 +140,7 @@ func FailedEntityNotFound(entityName, fieldName, fieldValue string) HTTPResponse
 func FailedEntityConflict(entityName, fieldName, fieldValue string) HTTPResponse {
 	return HTTPResponse{
 		Status:  statusFailed,
-		Code:    http.StatusNotFound,
+		Code:    http.StatusBadRequest,
 		Message: fmt.Sprintf("Duplicate entry for %s with %s: %s", entityName, fieldName, fieldValue),
 		Data:    nil,
 	}
