@@ -48,5 +48,5 @@ func (h *PokemonHTTPHandler) GetPokemonByName(ctx *gin.Context) {
 		return
 	}
 
-	responseSuccess(ctx, http.StatusOK, successMsgProviderAction(actionGet), p)
+	responseSuccess(ctx, http.StatusOK, successMsgPokemonAction(actionGet), p)
 }

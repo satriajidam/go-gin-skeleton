@@ -107,8 +107,13 @@ func New(port string, config ...Config) gin.HandlerFunc {
 			}
 
 			errMsg := ""
-			if len(ctx.Errors) > 0 {
+			switch {
+			case len(ctx.Errors) > 0:
 				errMsg = ctx.Errors.String()
+			case len(ctx.Errors) == 0 &&
+				ctx.Writer.Status() >= http.StatusBadRequest &&
+				ctx.Writer.Status() <= http.StatusNetworkAuthenticationRequired:
+				errMsg = http.StatusText(ctx.Writer.Status())
 			}
 
 			msg := fmt.Sprintf("HTTP request to port %s", port)

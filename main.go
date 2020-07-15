@@ -51,6 +51,10 @@ func main() {
 	v1.GET("/providers", providerHTTPHandler.ListProviders)
 	v1.GET("/pokemon/:name", pokemonHTTPHandler.GetPokemonByName)
 
+	skipMonitoringPaths := []string{"/_/health"}
+
+	httpServer.LoggerSkipPaths(skipMonitoringPaths...)
+
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
 		cfg.PrometheusServerMetricsPath,
@@ -59,7 +63,7 @@ func main() {
 	promServer.Monitor(
 		&prometheus.Target{
 			HTTPServer:   httpServer,
-			ExcludePaths: []string{"/_/health"},
+			ExcludePaths: skipMonitoringPaths,
 		},
 	)
 

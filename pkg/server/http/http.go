@@ -14,11 +14,12 @@ import (
 // Server represents the implementation of HTTP server object.
 type Server struct {
 	RouterGroup
-	http        *http.Server
-	router      *gin.Engine
-	middlewares []gin.HandlerFunc
-	routes      []route
-	Port        string
+	http         *http.Server
+	router       *gin.Engine
+	loggerConfig *logger.Config
+	middlewares  []gin.HandlerFunc
+	routes       []route
+	Port         string
 }
 
 type route struct {
@@ -28,9 +29,7 @@ type route struct {
 }
 
 // NewServer creates new HTTP server.
-// Use loggerSkipPaths to list all endpoint paths that you want to skip from being logged
-// by the logger middleware.
-func NewServer(port string, enablePredefinedRoutes bool, loggerSkipPaths ...string) *Server {
+func NewServer(port string, enablePredefinedRoutes bool) *Server {
 	routes := []route{}
 
 	if enablePredefinedRoutes {
@@ -43,11 +42,11 @@ func NewServer(port string, enablePredefinedRoutes bool, loggerSkipPaths ...stri
 			// Default gin middlewares.
 			gin.Recovery(),
 			requestid.New(),
-			logger.New(port, logger.Config{
-				Stdout:   log.Stdout(),
-				Stderr:   log.Stderr(),
-				SkipPath: loggerSkipPaths,
-			}),
+		},
+		loggerConfig: &logger.Config{
+			Stdout:   log.Stdout(),
+			Stderr:   log.Stderr(),
+			SkipPath: []string{},
 		},
 		routes: routes,
 		Port:   port,
@@ -63,6 +62,12 @@ func NewServer(port string, enablePredefinedRoutes bool, loggerSkipPaths ...stri
 // AddMiddleware adds a gin middleware the HTTP server.
 func (s *Server) AddMiddleware(h gin.HandlerFunc) {
 	s.middlewares = append(s.middlewares, h)
+}
+
+// LoggerSkipPaths registers endpoint paths that you want to skip from being logged
+// by the logger middleware.
+func (s *Server) LoggerSkipPaths(paths ...string) {
+	s.loggerConfig.SkipPath = append(s.loggerConfig.SkipPath, paths...)
 }
 
 // GetRoutePaths retrieves all route paths registerd to this HTTP server.
@@ -98,6 +103,7 @@ func loadRoutes(router *gin.Engine, routes []route) {
 // Start starts the HTTP server.
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
+	s.AddMiddleware(logger.New(s.Port, *s.loggerConfig))
 	s.router.Use(s.middlewares...)
 	loadRoutes(s.router, s.routes)
 	s.http = &http.Server{
