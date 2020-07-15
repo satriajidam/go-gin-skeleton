@@ -33,7 +33,7 @@ func main() {
 		panic(err)
 	}
 
-	httpServer := http.NewServer(cfg.HTTPServerPort, true)
+	httpServer := http.NewServer(cfg.HTTPServerPort, false, true)
 
 	providerRepository := provider.NewRepository(dbconn, true)
 	providerService := provider.NewService(providerRepository)

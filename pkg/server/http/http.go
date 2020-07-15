@@ -4,11 +4,33 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http/middleware/logger"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http/middleware/requestid"
+)
+
+var (
+	CORSDefaultAllowAllOrigins = true
+	CORSDefaultAllowMethods    = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"}
+	// CORS safelisted-request-header: https://fetch.spec.whatwg.org/#cors-safelisted-request-header
+	// CORS forbidden-header-name: https://fetch.spec.whatwg.org/#forbidden-header-name
+	CORSDefaultAllowHeaders = []string{
+		"Accept",
+		"Accept-Charset",
+		"Accept-Encoding",
+		"Accept-Language",
+		"Content-Language",
+		"Content-Length",
+		"Content-Type",
+		"Host",
+		"Origin",
+	}
+	CORSDefaultAllowCredentials = true
+	CORSDefaultMaxAge           = 12 * time.Hour
 )
 
 // Server represents the implementation of HTTP server object.
@@ -19,6 +41,8 @@ type Server struct {
 	loggerConfig *logger.Config
 	middlewares  []gin.HandlerFunc
 	routes       []route
+	enableCORS   bool
+	CORS         *cors.Config
 	Port         string
 }
 
@@ -29,7 +53,7 @@ type route struct {
 }
 
 // NewServer creates new HTTP server.
-func NewServer(port string, enablePredefinedRoutes bool) *Server {
+func NewServer(port string, enableCORS bool, enablePredefinedRoutes bool) *Server {
 	routes := []route{}
 
 	if enablePredefinedRoutes {
@@ -47,6 +71,12 @@ func NewServer(port string, enablePredefinedRoutes bool) *Server {
 			Stdout:   log.Stdout(),
 			Stderr:   log.Stderr(),
 			SkipPath: []string{},
+		},
+		enableCORS: enableCORS,
+		CORS: &cors.Config{
+			AllowAllOrigins:  CORSDefaultAllowAllOrigins,
+			AllowCredentials: CORSDefaultAllowCredentials,
+			MaxAge:           CORSDefaultMaxAge,
 		},
 		routes: routes,
 		Port:   port,
@@ -103,6 +133,15 @@ func loadRoutes(router *gin.Engine, routes []route) {
 // Start starts the HTTP server.
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
+	if s.enableCORS {
+		if len(s.CORS.AllowMethods) == 0 {
+			s.CORS.AllowMethods = CORSDefaultAllowMethods
+		}
+		if len(s.CORS.AllowHeaders) == 0 {
+			s.CORS.AllowHeaders = CORSDefaultAllowHeaders
+		}
+		s.AddMiddleware(cors.New(*s.CORS))
+	}
 	s.AddMiddleware(logger.New(s.Port, *s.loggerConfig))
 	s.router.Use(s.middlewares...)
 	loadRoutes(s.router, s.routes)
