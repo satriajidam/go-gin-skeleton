@@ -79,7 +79,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		start := time.Now()
-		requestID := requestid.Get(ctx)
+		requestID := ctx.GetHeader(requestid.HeaderXRequestID)
 		routePath := ctx.FullPath()
 		path := ctx.Request.URL.Path
 		raw := ctx.Request.URL.RawQuery
