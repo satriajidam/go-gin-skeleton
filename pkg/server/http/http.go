@@ -68,10 +68,10 @@ func NewServer(port string, enableCORS bool, enablePredefinedRoutes bool) *Serve
 			requestid.New(),
 		},
 		loggerConfig: &logger.Config{
-			Stdout:    log.Stdout(),
-			Stderr:    log.Stderr(),
-			RoutePath: []logger.LogPath{},
-			SkipPath:  []logger.LogPath{},
+			Stdout:   log.Stdout(),
+			Stderr:   log.Stderr(),
+			Routes:   []logger.Route{},
+			SkipPath: []string{},
 		},
 		enableCORS: enableCORS,
 		CORS: &cors.Config{
@@ -96,11 +96,7 @@ func (s *Server) AddMiddleware(h gin.HandlerFunc) {
 // LoggerSkipPaths registers endpoint paths that you want to skip from being logged
 // by the logger middleware.
 func (s *Server) LoggerSkipPaths(paths ...string) {
-	skipPath := []logger.LogPath{}
-	for _, p := range paths {
-		skipPath = append(skipPath, logger.LogPath{Path: p, LogPayload: false})
-	}
-	s.loggerConfig.SkipPath = append(s.loggerConfig.SkipPath, skipPath...)
+	s.loggerConfig.SkipPath = append(s.loggerConfig.SkipPath, paths...)
 }
 
 // GetRoutePaths retrieves all route paths registerd to this HTTP server.
@@ -112,32 +108,37 @@ func (s *Server) GetRoutePaths() []string {
 	return paths
 }
 
-func (s *Server) loadRoutes(router *gin.Engine, routes []route) {
-	for _, route := range routes {
-		switch route.method {
-		case http.MethodGet:
-			router.GET(route.relativePath, route.handlers...)
-		case http.MethodHead:
-			router.HEAD(route.relativePath, route.handlers...)
-		case http.MethodPost:
-			router.POST(route.relativePath, route.handlers...)
-		case http.MethodPut:
-			router.PUT(route.relativePath, route.handlers...)
-		case http.MethodPatch:
-			router.PATCH(route.relativePath, route.handlers...)
-		case http.MethodDelete:
-			router.DELETE(route.relativePath, route.handlers...)
-		case http.MethodOptions:
-			router.OPTIONS(route.relativePath, route.handlers...)
-		}
-
-		s.loggerConfig.RoutePath = append(
-			s.loggerConfig.RoutePath,
-			logger.LogPath{
-				Path:       route.relativePath,
-				LogPayload: route.logPayload,
+func (s *Server) loadLoggerRoutes() {
+	for _, route := range s.routes {
+		s.loggerConfig.Routes = append(
+			s.loggerConfig.Routes,
+			logger.Route{
+				Method:       route.method,
+				RelativePath: route.relativePath,
+				LogPayload:   route.logPayload,
 			},
 		)
+	}
+}
+
+func (s *Server) loadRoutes() {
+	for _, route := range s.routes {
+		switch route.method {
+		case http.MethodGet:
+			s.router.GET(route.relativePath, route.handlers...)
+		case http.MethodHead:
+			s.router.HEAD(route.relativePath, route.handlers...)
+		case http.MethodPost:
+			s.router.POST(route.relativePath, route.handlers...)
+		case http.MethodPut:
+			s.router.PUT(route.relativePath, route.handlers...)
+		case http.MethodPatch:
+			s.router.PATCH(route.relativePath, route.handlers...)
+		case http.MethodDelete:
+			s.router.DELETE(route.relativePath, route.handlers...)
+		case http.MethodOptions:
+			s.router.OPTIONS(route.relativePath, route.handlers...)
+		}
 	}
 }
 
@@ -164,10 +165,11 @@ func (s *Server) setupCORS() {
 // Start starts the HTTP server.
 func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start HTTP server on port %s", s.Port))
-	s.setupCORS()
+	s.loadLoggerRoutes()
 	s.AddMiddleware(logger.New(s.Port, *s.loggerConfig))
+	s.setupCORS()
 	s.router.Use(s.middlewares...)
-	s.loadRoutes(s.router, s.routes)
+	s.loadRoutes()
 	s.http = &http.Server{
 		Addr:    fmt.Sprintf(":%s", s.Port),
 		Handler: s.router,

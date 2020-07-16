@@ -20,14 +20,15 @@ type Config struct {
 	Stdout *zerolog.Logger
 	Stderr *zerolog.Logger
 	// UTC a boolean stating whether to use UTC time zone or local.
-	UTC       bool
-	RoutePath []LogPath
-	SkipPath  []LogPath
+	UTC      bool
+	Routes   []Route
+	SkipPath []string
 }
 
-type LogPath struct {
-	Path       string
-	LogPayload bool
+type Route struct {
+	Method       string
+	RelativePath string
+	LogPayload   bool
 }
 
 type logFields struct {
@@ -54,6 +55,10 @@ func createDumplogger(logger *zerolog.Logger, fields logFields) zerolog.Logger {
 		Logger()
 }
 
+func pathKey(method, path string) string {
+	return fmt.Sprintf("%s %s", method, path)
+}
+
 // New initializes the logging middleware.
 func New(port string, config ...Config) gin.HandlerFunc {
 	var newConfig Config
@@ -61,19 +66,19 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		newConfig = config[0]
 	}
 
-	var skipped map[string]bool
+	var skipped map[string]struct{}
 	if length := len(newConfig.SkipPath); length > 0 {
-		skipped = make(map[string]bool, length)
+		skipped = make(map[string]struct{}, length)
 		for _, p := range newConfig.SkipPath {
-			skipped[p.Path] = p.LogPayload
+			skipped[p] = struct{}{}
 		}
 	}
 
-	var logged map[string]bool
-	if length := len(newConfig.RoutePath); length > 0 {
-		logged = make(map[string]bool, length)
-		for _, p := range newConfig.RoutePath {
-			logged[p.Path] = p.LogPayload
+	var logged map[string]Route
+	if length := len(newConfig.Routes); length > 0 {
+		logged = make(map[string]Route, length)
+		for _, p := range newConfig.Routes {
+			logged[pathKey(p.Method, p.RelativePath)] = p
 		}
 	}
 
@@ -94,6 +99,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		start := time.Now()
 		requestID := ctx.GetHeader(requestid.HeaderXRequestID)
+		method := ctx.Request.Method
 		routePath := ctx.FullPath()
 		path := ctx.Request.URL.Path
 		raw := ctx.Request.URL.RawQuery
@@ -102,7 +108,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		}
 
 		payload := ""
-		if yes, ok := logged[path]; ok && yes {
+		if p, ok := logged[pathKey(method, routePath)]; ok && p.LogPayload {
 			var buf bytes.Buffer
 			tee := io.TeeReader(ctx.Request.Body, &buf)
 			body, _ := ioutil.ReadAll(tee)
