@@ -20,8 +20,14 @@ type Config struct {
 	Stdout *zerolog.Logger
 	Stderr *zerolog.Logger
 	// UTC a boolean stating whether to use UTC time zone or local.
-	UTC      bool
-	SkipPath []string
+	UTC       bool
+	RoutePath []LogPath
+	SkipPath  []LogPath
+}
+
+type LogPath struct {
+	Path       string
+	LogPayload bool
 }
 
 type logFields struct {
@@ -55,11 +61,19 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		newConfig = config[0]
 	}
 
-	var skip map[string]struct{}
+	var skipped map[string]bool
 	if length := len(newConfig.SkipPath); length > 0 {
-		skip = make(map[string]struct{}, length)
-		for _, path := range newConfig.SkipPath {
-			skip[path] = struct{}{}
+		skipped = make(map[string]bool, length)
+		for _, p := range newConfig.SkipPath {
+			skipped[p.Path] = p.LogPayload
+		}
+	}
+
+	var logged map[string]bool
+	if length := len(newConfig.RoutePath); length > 0 {
+		logged = make(map[string]bool, length)
+		for _, p := range newConfig.RoutePath {
+			logged[p.Path] = p.LogPayload
 		}
 	}
 
@@ -87,15 +101,19 @@ func New(port string, config ...Config) gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		var buf bytes.Buffer
-		tee := io.TeeReader(ctx.Request.Body, &buf)
-		body, _ := ioutil.ReadAll(tee)
-		ctx.Request.Body = ioutil.NopCloser(&buf)
+		payload := ""
+		if yes, ok := logged[path]; ok && yes {
+			var buf bytes.Buffer
+			tee := io.TeeReader(ctx.Request.Body, &buf)
+			body, _ := ioutil.ReadAll(tee)
+			ctx.Request.Body = ioutil.NopCloser(&buf)
+			payload = string(body)
+		}
 
 		ctx.Next()
 
 		track := true
-		if _, ok := skip[routePath]; ok {
+		if _, ok := skipped[routePath]; ok {
 			track = false
 		}
 
@@ -126,7 +144,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 				clientIP:  ctx.ClientIP(),
 				latency:   latency,
 				userAgent: ctx.Request.UserAgent(),
-				payload:   string(body),
+				payload:   payload,
 			}
 
 			dumpStdout := createDumplogger(stdout, fields)

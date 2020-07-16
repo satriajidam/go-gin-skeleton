@@ -54,14 +54,14 @@ func main() {
 	v1 := httpServer.Group("/v1")
 
 	// Provider APIs:
-	v1.POST("/provider", providerHTTPHandler.CreateProvider)
-	v1.PUT("/provider/:uuid", providerHTTPHandler.UpdateProvider)
-	v1.DELETE("/provider/:uuid", providerHTTPHandler.DeleteProviderByUUID)
-	v1.GET("/provider/:uuid", providerHTTPHandler.GetProviderByUUID)
-	v1.GET("/providers", providerHTTPHandler.GetProviders)
+	v1.POST("/provider", true, providerHTTPHandler.CreateProvider)
+	v1.PUT("/provider/:uuid", true, providerHTTPHandler.UpdateProvider)
+	v1.DELETE("/provider/:uuid", false, providerHTTPHandler.DeleteProviderByUUID)
+	v1.GET("/provider/:uuid", false, providerHTTPHandler.GetProviderByUUID)
+	v1.GET("/providers", false, providerHTTPHandler.GetProviders)
 
 	// Pokemon APIs:
-	v1.GET("/pokemon/:name", pokemonHTTPHandler.GetPokemonByName)
+	v1.GET("/pokemon/:name", false, pokemonHTTPHandler.GetPokemonByName)
 
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,

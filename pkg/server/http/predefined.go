@@ -17,26 +17,31 @@ var predefinedRoutes = []route{
 	{
 		method:       http.MethodGet,
 		relativePath: "/_/health",
+		logPayload:   false,
 		handlers:     []gin.HandlerFunc{healthCheck},
 	},
 	{
 		method:       http.MethodGet,
 		relativePath: "/_/status/:code",
+		logPayload:   false,
 		handlers:     []gin.HandlerFunc{simulateStatusCode},
 	},
 	{
 		method:       http.MethodPost,
 		relativePath: "/_/status/:code",
+		logPayload:   false,
 		handlers:     []gin.HandlerFunc{simulateStatusCode},
 	},
 	{
 		method:       http.MethodGet,
 		relativePath: "/_/latency/:seconds",
+		logPayload:   false,
 		handlers:     []gin.HandlerFunc{simulateLatency},
 	},
 	{
 		method:       http.MethodPost,
 		relativePath: "/_/latency/:seconds",
+		logPayload:   false,
 		handlers:     []gin.HandlerFunc{simulateLatency},
 	},
 }

@@ -48,6 +48,7 @@ type Server struct {
 type route struct {
 	method       string
 	relativePath string
+	logPayload   bool
 	handlers     []gin.HandlerFunc
 }
 
@@ -67,9 +68,10 @@ func NewServer(port string, enableCORS bool, enablePredefinedRoutes bool) *Serve
 			requestid.New(),
 		},
 		loggerConfig: &logger.Config{
-			Stdout:   log.Stdout(),
-			Stderr:   log.Stderr(),
-			SkipPath: []string{},
+			Stdout:    log.Stdout(),
+			Stderr:    log.Stderr(),
+			RoutePath: []logger.LogPath{},
+			SkipPath:  []logger.LogPath{},
 		},
 		enableCORS: enableCORS,
 		CORS: &cors.Config{
@@ -94,7 +96,11 @@ func (s *Server) AddMiddleware(h gin.HandlerFunc) {
 // LoggerSkipPaths registers endpoint paths that you want to skip from being logged
 // by the logger middleware.
 func (s *Server) LoggerSkipPaths(paths ...string) {
-	s.loggerConfig.SkipPath = append(s.loggerConfig.SkipPath, paths...)
+	skipPath := []logger.LogPath{}
+	for _, p := range paths {
+		skipPath = append(skipPath, logger.LogPath{Path: p, LogPayload: false})
+	}
+	s.loggerConfig.SkipPath = append(s.loggerConfig.SkipPath, skipPath...)
 }
 
 // GetRoutePaths retrieves all route paths registerd to this HTTP server.
@@ -106,7 +112,7 @@ func (s *Server) GetRoutePaths() []string {
 	return paths
 }
 
-func loadRoutes(router *gin.Engine, routes []route) {
+func (s *Server) loadRoutes(router *gin.Engine, routes []route) {
 	for _, route := range routes {
 		switch route.method {
 		case http.MethodGet:
@@ -124,6 +130,14 @@ func loadRoutes(router *gin.Engine, routes []route) {
 		case http.MethodOptions:
 			router.OPTIONS(route.relativePath, route.handlers...)
 		}
+
+		s.loggerConfig.RoutePath = append(
+			s.loggerConfig.RoutePath,
+			logger.LogPath{
+				Path:       route.relativePath,
+				LogPayload: route.logPayload,
+			},
+		)
 	}
 }
 
@@ -154,7 +168,7 @@ func (s *Server) Start() error {
 	s.setupCORS()
 	s.AddMiddleware(logger.New(s.Port, *s.loggerConfig))
 	s.router.Use(s.middlewares...)
-	loadRoutes(s.router, s.routes)
+	s.loadRoutes(s.router, s.routes)
 	s.http = &http.Server{
 		Addr:    fmt.Sprintf(":%s", s.Port),
 		Handler: s.router,
@@ -174,67 +188,50 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-// POST registers HTTP server endpoint with Post method.
-func (s *Server) POST(relativePath string, handlers ...gin.HandlerFunc) {
+func (s *Server) appendRoute(
+	method, relativePath string, logPayload bool, handlers ...gin.HandlerFunc,
+) {
 	s.routes = append(s.routes, route{
-		method:       http.MethodPost,
+		method:       method,
 		relativePath: relativePath,
+		logPayload:   logPayload,
 		handlers:     handlers,
 	})
+}
+
+// POST registers HTTP server endpoint with Post method.
+func (s *Server) POST(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodPost, relativePath, logPayload, handlers...)
 }
 
 // GET registers HTTP server endpoint with Get method.
-func (s *Server) GET(relativePath string, handlers ...gin.HandlerFunc) {
-	s.routes = append(s.routes, route{
-		method:       http.MethodGet,
-		relativePath: relativePath,
-		handlers:     handlers,
-	})
+func (s *Server) GET(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodGet, relativePath, logPayload, handlers...)
 }
 
 // DELETE registers HTTP server endpoint with Delete method.
-func (s *Server) DELETE(relativePath string, handlers ...gin.HandlerFunc) {
-	s.routes = append(s.routes, route{
-		method:       http.MethodDelete,
-		relativePath: relativePath,
-		handlers:     handlers,
-	})
+func (s *Server) DELETE(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodDelete, relativePath, logPayload, handlers...)
 }
 
 // PATCH registers HTTP server endpoint with Patch method.
-func (s *Server) PATCH(relativePath string, handlers ...gin.HandlerFunc) {
-	s.routes = append(s.routes, route{
-		method:       http.MethodPatch,
-		relativePath: relativePath,
-		handlers:     handlers,
-	})
+func (s *Server) PATCH(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodPatch, relativePath, logPayload, handlers...)
 }
 
 // PUT registers HTTP server endpoint with Put method.
-func (s *Server) PUT(relativePath string, handlers ...gin.HandlerFunc) {
-	s.routes = append(s.routes, route{
-		method:       http.MethodPut,
-		relativePath: relativePath,
-		handlers:     handlers,
-	})
+func (s *Server) PUT(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodPut, relativePath, logPayload, handlers...)
 }
 
 // OPTIONS registers HTTP server endpoint with Options method.
-func (s *Server) OPTIONS(relativePath string, handlers ...gin.HandlerFunc) {
-	s.routes = append(s.routes, route{
-		method:       http.MethodOptions,
-		relativePath: relativePath,
-		handlers:     handlers,
-	})
+func (s *Server) OPTIONS(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodOptions, relativePath, logPayload, handlers...)
 }
 
 // HEAD registers HTTP server endpoint with Head method.
-func (s *Server) HEAD(relativePath string, handlers ...gin.HandlerFunc) {
-	s.routes = append(s.routes, route{
-		method:       http.MethodHead,
-		relativePath: relativePath,
-		handlers:     handlers,
-	})
+func (s *Server) HEAD(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	s.appendRoute(http.MethodHead, relativePath, logPayload, handlers...)
 }
 
 // RouterGroup groups path under one path prefix.
@@ -252,36 +249,36 @@ func (rg *RouterGroup) Group(prefix string) *RouterGroup {
 }
 
 // POST registers HTTP server endpoint with Post method.
-func (rg *RouterGroup) POST(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.POST(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) POST(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.POST(rg.prefix+relativePath, logPayload, handlers...)
 }
 
 // GET registers HTTP server endpoint with Get method.
-func (rg *RouterGroup) GET(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.GET(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) GET(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.GET(rg.prefix+relativePath, logPayload, handlers...)
 }
 
 // DELETE registers HTTP server endpoint with Delete method.
-func (rg *RouterGroup) DELETE(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.DELETE(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) DELETE(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.DELETE(rg.prefix+relativePath, logPayload, handlers...)
 }
 
 // PATCH registers HTTP server endpoint with Patch method.
-func (rg *RouterGroup) PATCH(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.PATCH(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) PATCH(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.PATCH(rg.prefix+relativePath, logPayload, handlers...)
 }
 
 // PUT registers HTTP server endpoint with Put method.
-func (rg *RouterGroup) PUT(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.PUT(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) PUT(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.PUT(rg.prefix+relativePath, logPayload, handlers...)
 }
 
 // OPTIONS registers HTTP server endpoint with Options method.
-func (rg *RouterGroup) OPTIONS(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.OPTIONS(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) OPTIONS(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.OPTIONS(rg.prefix+relativePath, logPayload, handlers...)
 }
 
 // HEAD registers HTTP server endpoint with Head method.
-func (rg *RouterGroup) HEAD(relativePath string, handlers ...gin.HandlerFunc) {
-	rg.server.HEAD(rg.prefix+relativePath, handlers...)
+func (rg *RouterGroup) HEAD(relativePath string, logPayload bool, handlers ...gin.HandlerFunc) {
+	rg.server.HEAD(rg.prefix+relativePath, logPayload, handlers...)
 }
