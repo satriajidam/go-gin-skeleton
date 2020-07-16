@@ -24,10 +24,10 @@ type Client struct {
 }
 
 // NewClient creates new pokeapi HTTP client.
-func NewClient(apiURL string, timeoutSeconds int) *Client {
+func NewClient(apiURL string, timeoutSeconds time.Duration) *Client {
 	client := resty.New()
 	client.SetHostURL(apiURL)
-	client.SetTimeout(time.Duration(timeoutSeconds) * time.Second)
+	client.SetTimeout(timeoutSeconds * time.Second)
 	return &Client{
 		client: client,
 	}

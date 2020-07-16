@@ -33,13 +33,21 @@ func main() {
 		panic(err)
 	}
 
-	httpServer := http.NewServer(cfg.HTTPServerPort, false, true)
+	httpServer := http.NewServer(
+		cfg.HTTPServerPort,
+		cfg.HTTPServerEnableCORS,
+		cfg.HTTPServerEnablePredefinedRoutes,
+	)
+	httpServer.CORS.AllowOrigins = cfg.HTTPServerAllowOrigins
+	httpServer.CORS.AllowMethods = cfg.HTTPServerAllowMethods
+	httpServer.CORS.AllowHeaders = cfg.HTTPServerAllowHeaders
+	httpServer.CORS.MaxAge = cfg.HTTPServerMaxAge
 
 	providerRepository := provider.NewRepository(dbconn, true)
 	providerService := provider.NewService(providerRepository)
 	providerHTTPHandler := api.NewProviderHTTPHandler(providerService)
 
-	pokeapiClient := pokeapi.NewClient(cfg.PokeAPIAddressV2, 15)
+	pokeapiClient := pokeapi.NewClient(cfg.PokeAPIAddressV2, cfg.PokeAPITimeout)
 	pokemonService := pokemon.NewService(pokeapiClient)
 	pokemonHTTPHandler := api.NewPokemonHTTPHandler(pokemonService)
 
@@ -55,8 +63,6 @@ func main() {
 	// Pokemon APIs:
 	v1.GET("/pokemon/:name", pokemonHTTPHandler.GetPokemonByName)
 
-	skipMonitoringPaths := []string{"/_/health"}
-
 	promServer := prometheus.NewServer(
 		cfg.PrometheusServerPort,
 		cfg.PrometheusServerMetricsPath,
@@ -64,8 +70,9 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			HTTPServer:   httpServer,
-			ExcludePaths: skipMonitoringPaths,
+			HTTPServer:    httpServer,
+			ExcludePaths:  cfg.HTTPServerMonitorSkipPaths,
+			GroupedStatus: cfg.HTTPServerMonitorGroupedStatus,
 		},
 	)
 

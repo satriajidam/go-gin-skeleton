@@ -56,7 +56,7 @@ func StopServers(ctx context.Context, servers ...Server) {
 }
 
 // RunServersGracefully runs all given servers in a graceful way.
-func RunServersGracefully(timeout int, servers ...Server) {
+func RunServersGracefully(timeoutSeconds time.Duration, servers ...Server) {
 	if err := <-StartServers(servers...); err != nil {
 		panic(err)
 	}
@@ -72,7 +72,7 @@ func RunServersGracefully(timeout int, servers ...Server) {
 	// Set graceful shutdown timeout to configured seconds.
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(timeout)*time.Second,
+		timeoutSeconds*time.Second,
 	)
 	defer cancel()
 

@@ -2,6 +2,7 @@ package config
 
 import (
 	"sync"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -18,13 +19,21 @@ type Config struct {
 	AppMode string `envconfig:"APP_MODE" default:"debug"`
 
 	// Graceful shutdown timeout in seconds.
-	GracefulTimeout int `envconfig:"GRACEFUL_TIMEOUT" default:"5"`
+	GracefulTimeout time.Duration `envconfig:"GRACEFUL_TIMEOUT" default:"5s"`
 
 	// Gin engine specific configs.
 	GinDisallowUnknownJSONFields bool `envconfig:"GIN_DISALLOW_UNKNOWN_JSON_FIELDS" default:"false"`
 
 	// HTTP Server configurations.
-	HTTPServerPort string `envconfig:"HTTP_SERVER_PORT" default:"80"`
+	HTTPServerPort                   string        `envconfig:"HTTP_SERVER_PORT" default:"80"`
+	HTTPServerEnableCORS             bool          `envconfig:"HTTP_SERVER_ENABLE_CORS" default:"true"`
+	HTTPServerEnablePredefinedRoutes bool          `envconfig:"HTTP_SERVER_ENABLE_PREDEFINED_ROUTES" default:"true"`
+	HTTPServerAllowMethods           []string      `envconfig:"HTTP_SERVER_ALLOW_METHODS" default:""`
+	HTTPServerAllowHeaders           []string      `envconfig:"HTTP_SERVER_ALLOW_HEADERS" default:""`
+	HTTPServerAllowOrigins           []string      `envconfig:"HTTP_SERVER_ALLOW_ORIGINS" default:""`
+	HTTPServerMaxAge                 time.Duration `envconfig:"HTTP_SERVER_MAX_AGE" default:""`
+	HTTPServerMonitorGroupedStatus   bool          `envconfig:"HTTP_SERVER_MONITOR_GROUPED_STATUS" default:"false"`
+	HTTPServerMonitorSkipPaths       []string      `envconfig:"HTTP_SERVER_MONITOR_SKIP_PATHS" default:"/_/health"`
 
 	// Prometheus Server configurations.
 	PrometheusServerPort          string `envconfig:"PROMETHEUS_SERVER_PORT" default:"9180"`
@@ -78,7 +87,8 @@ type Config struct {
 	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`
 
 	// External dependencies.
-	PokeAPIAddressV2 string `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api/v2"`
+	PokeAPIAddressV2 string        `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api/v2"`
+	PokeAPITimeout   time.Duration `envconfig:"POKEAPI_TIMEOUT" default:"15s"`
 }
 
 var (
