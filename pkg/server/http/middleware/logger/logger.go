@@ -74,11 +74,11 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		}
 	}
 
-	var logged map[string]Route
+	var logged map[string]bool
 	if length := len(newConfig.Routes); length > 0 {
-		logged = make(map[string]Route, length)
+		logged = make(map[string]bool, length)
 		for _, p := range newConfig.Routes {
-			logged[pathKey(p.Method, p.RelativePath)] = p
+			logged[pathKey(p.Method, p.RelativePath)] = p.LogPayload
 		}
 	}
 
@@ -108,7 +108,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 		}
 
 		payload := ""
-		if p, ok := logged[pathKey(method, routePath)]; ok && p.LogPayload {
+		if yes, ok := logged[pathKey(method, routePath)]; ok && yes {
 			var buf bytes.Buffer
 			tee := io.TeeReader(ctx.Request.Body, &buf)
 			body, _ := ioutil.ReadAll(tee)
