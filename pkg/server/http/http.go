@@ -157,7 +157,6 @@ func (s *Server) setupCORS() {
 		if s.CORS.MaxAge <= 0 {
 			s.CORS.MaxAge = CORSDefaultMaxAge
 		}
-		fmt.Printf("%+v\n", s.CORS)
 		s.AddMiddleware(cors.New(*s.CORS))
 	}
 }
