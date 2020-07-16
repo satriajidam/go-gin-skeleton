@@ -29,7 +29,7 @@ var predefinedRoutes = []route{
 	{
 		method:       http.MethodPost,
 		relativePath: "/_/status/:code",
-		logPayload:   false,
+		logPayload:   true,
 		handlers:     []gin.HandlerFunc{simulateStatusCode},
 	},
 	{
@@ -41,7 +41,7 @@ var predefinedRoutes = []route{
 	{
 		method:       http.MethodPost,
 		relativePath: "/_/latency/:seconds",
-		logPayload:   false,
+		logPayload:   true,
 		handlers:     []gin.HandlerFunc{simulateLatency},
 	},
 }
