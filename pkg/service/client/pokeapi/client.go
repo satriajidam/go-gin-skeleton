@@ -43,16 +43,13 @@ func (c *Client) GetPokemonByName(name string) (*Pokemon, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode() == http.StatusNotFound {
+	switch {
+	case resp.StatusCode() == http.StatusNotFound:
 		return nil, ErrNotFound
-	}
-
-	if resp.StatusCode() >= http.StatusBadRequest &&
-		resp.StatusCode() < http.StatusInternalServerError {
+	case resp.StatusCode() >= http.StatusBadRequest &&
+		resp.StatusCode() < http.StatusInternalServerError:
 		return nil, ErrClientSide
-	}
-
-	if resp.StatusCode() >= http.StatusInternalServerError {
+	case resp.StatusCode() >= http.StatusInternalServerError:
 		return nil, ErrServerSide
 	}
 
