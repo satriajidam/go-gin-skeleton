@@ -81,7 +81,7 @@ type Config struct {
 
 	// SQLite database configurations.
 	SQLiteDatabase      string `envconfig:"SQLITE_DATABASE" default:"file:database.db?mode=memory&cache=shared"`
-	SQLiteDebugMode     bool   `envconfig:"SQLITE_DEBUG_MODE" default:"false"`
+	SQLiteDebugMode     bool   `envconfig:"SQLITE_DEBUG_MODE" default:"true"`
 	SQLiteMaxIdleConns  int    `envconfig:"SQLITE_MAX_IDLE_CONNS" default:"1"`
 	SQLiteMaxOpenConns  int    `envconfig:"SQLITE_MAX_OPEN_CONNS" default:"1"`
 	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`

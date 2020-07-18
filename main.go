@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
-	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/sqlite"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/mysql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
@@ -16,12 +16,17 @@ import (
 func main() {
 	cfg := config.Get()
 
-	dbconn, err := sqlite.NewConnection(sql.DBConfig{
-		Database:      cfg.SQLiteDatabase,
-		MaxIdleConns:  cfg.SQLiteMaxIdleConns,
-		MaxOpenConns:  cfg.SQLiteMaxOpenConns,
-		SingularTable: cfg.SQLiteSingularTable,
-		DebugMode:     cfg.SQLiteDebugMode,
+	dbconn, err := mysql.NewConnection(sql.DBConfig{
+		Host:          cfg.MySQLHost,
+		Port:          cfg.MySQLPort,
+		Database:      cfg.MySQLDatabase,
+		Username:      cfg.MySQLUsername,
+		Password:      cfg.MySQLPassword,
+		Params:        cfg.MySQLParams,
+		MaxIdleConns:  cfg.MySQLMaxIdleConns,
+		MaxOpenConns:  cfg.MySQLMaxOpenConns,
+		SingularTable: cfg.MySQLSingularTable,
+		DebugMode:     cfg.MySQLDebugMode,
 	})
 	defer func() {
 		err := dbconn.Close()
