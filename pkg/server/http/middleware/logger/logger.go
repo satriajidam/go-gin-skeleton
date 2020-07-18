@@ -107,7 +107,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		payload := ""
+		payload := "-"
 		if yes, ok := logged[pathKey(method, routePath)]; ok && yes {
 			var buf bytes.Buffer
 			tee := io.TeeReader(ctx.Request.Body, &buf)
@@ -130,7 +130,7 @@ func New(port string, config ...Config) gin.HandlerFunc {
 				end = end.UTC()
 			}
 
-			errMsg := ""
+			errMsg := "-"
 			switch {
 			case len(ctx.Errors) > 0:
 				errMsg = ctx.Errors.String()
