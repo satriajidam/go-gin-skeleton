@@ -1,0 +1,30 @@
+version: '2.4'
+services:
+  backend:
+    build: .
+    restart: on-failure
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: '3306'
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: toor
+      MYSQL_DATABASE: skeleton
+    ports:
+    - 80:80
+    - 9180:9180
+    depends_on:
+      mysql:
+        condition: service_healthy
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_DATABASE: skeleton
+    ports:
+    - 3306:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1", "-P", "3306", "-uroot", "-ptoor"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 10s
