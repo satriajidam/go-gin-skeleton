@@ -9,14 +9,20 @@ services:
       MYSQL_USERNAME: root
       MYSQL_PASSWORD: toor
       MYSQL_DATABASE: skeleton
+      REDIS_HOST: keydb
+      REDIS_PORT: '6379'
+      REDIS_PASSWORD: unlock
+      REDIS_NAMESPACE: skeleton
     ports:
     - 80:80
     - 9180:9180
     depends_on:
       mysql:
         condition: service_healthy
+      keydb:
+        condition: service_healthy
   mysql:
-    image: mysql:5.7
+    image: mysql:5.7.31
     environment:
       MYSQL_ROOT_PASSWORD: toor
       MYSQL_DATABASE: skeleton
@@ -28,3 +34,14 @@ services:
       timeout: 15s
       retries: 5
       start_period: 10s
+  keydb:
+    image: eqalpha/keydb:x86_64_v6.0.13
+    command: ["keydb-server", "--server-threads", "2", "--requirepass", "unlock"]
+    ports:
+    - 6379:6379
+    healthcheck:
+      test: ["CMD", "keydb-cli" , "-h", "127.0.0.1", "-p", "6379", "-a", "unlock", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s

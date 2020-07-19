@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/mysql"
@@ -37,6 +40,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	redisconn := redis.NewConnection(
+		cfg.RedisHost,
+		cfg.RedisPort,
+		cfg.RedisUsername,
+		cfg.RedisPassword,
+		cfg.RedisNamespace,
+		cfg.RedisDBNumber,
+		cfg.RedisLocalCacheSize,
+		cfg.RedisLocalCacheTTL,
+		cfg.RedisMustAvailable,
+	)
+	fmt.Println(redisconn)
 
 	httpServer := http.NewServer(
 		cfg.HTTPServerPort,

@@ -86,6 +86,17 @@ type Config struct {
 	SQLiteMaxOpenConns  int    `envconfig:"SQLITE_MAX_OPEN_CONNS" default:"1"`
 	SQLiteSingularTable bool   `envconfig:"SQLITE_SINGULAR_TABLE" default:"false"`
 
+	// Redis configurations.
+	RedisHost           string        `envconfig:"REDIS_HOST" default:"127.0.0.1"`
+	RedisPort           string        `envconfig:"REDIS_PORT" default:"6379"`
+	RedisUsername       string        `envconfig:"REDIS_USERNAME" default:""`
+	RedisPassword       string        `envconfig:"REDIS_PASSWORD" default:""`
+	RedisNamespace      string        `envconfig:"REDIS_NAMESPACE" default:""`
+	RedisDBNumber       int           `envconfig:"REDIS_DB_NUMBER" default:"0"`
+	RedisLocalCacheSize int           `envconfig:"REDIS_LOCAL_CACHE_SIZE" default:"0"`
+	RedisLocalCacheTTL  time.Duration `envconfig:"REDIS_LOCAL_CACHE_TTL" default:"1h"`
+	RedisMustAvailable  bool          `envconfig:"REDIS_MUST_AVAILABLE" default:"false"`
+
 	// External dependencies.
 	PokeAPIAddressV2 string        `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api/v2"`
 	PokeAPITimeout   time.Duration `envconfig:"POKEAPI_TIMEOUT" default:"15s"`
