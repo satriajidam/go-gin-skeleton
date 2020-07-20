@@ -19,14 +19,14 @@ type RedisConnection struct {
 	skipLocalCache bool
 	Namespace      string
 	MustAvailable  bool
+	DebugMode      bool
 }
 
 // NewConnection creates new Redis connection.
 func NewConnection(
-	host, port, username, password, namespace string,
-	dbnumber, localCacheSize int,
-	localCacheTTL time.Duration,
-	mustAvailable bool,
+	host, port, username, password, namespace string, dbnumber int,
+	localCacheSize int, localCacheTTL time.Duration,
+	mustAvailable, debugMode bool,
 ) *RedisConnection {
 	address := fmt.Sprintf("%s:%s", host, port)
 	client := redisv8.NewClient(&redisv8.Options{
@@ -63,6 +63,7 @@ func NewConnection(
 		skipLocalCache: skipLocalCache,
 		Namespace:      namespace,
 		MustAvailable:  mustAvailable,
+		DebugMode:      debugMode,
 	}
 }
 
@@ -98,7 +99,9 @@ func (rc *RedisConnection) GetCache(
 	err := rc.cache.Get(ctx, rc.namespacedKey(key), &value)
 	if err != nil {
 		if err == redisv8.Nil {
-			log.Warn(msgErrNoCache(rc.namespacedKey(key)))
+			if rc.DebugMode {
+				log.Warn(msgErrNoCache(rc.namespacedKey(key)))
+			}
 			return nil
 		}
 		if !rc.MustAvailable {

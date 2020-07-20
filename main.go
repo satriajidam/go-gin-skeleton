@@ -51,6 +51,7 @@ func main() {
 		cfg.RedisLocalCacheSize,
 		cfg.RedisLocalCacheTTL,
 		cfg.RedisMustAvailable,
+		cfg.RedisDebugMode,
 	)
 	fmt.Println(redisconn)
 

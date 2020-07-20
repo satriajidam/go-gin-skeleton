@@ -96,6 +96,7 @@ type Config struct {
 	RedisLocalCacheSize int           `envconfig:"REDIS_LOCAL_CACHE_SIZE" default:"0"`
 	RedisLocalCacheTTL  time.Duration `envconfig:"REDIS_LOCAL_CACHE_TTL" default:"1h"`
 	RedisMustAvailable  bool          `envconfig:"REDIS_MUST_AVAILABLE" default:"false"`
+	RedisDebugMode      bool          `envconfig:"REDIS_DEBUG_MODE" default:"true"`
 
 	// External dependencies.
 	PokeAPIAddressV2 string        `envconfig:"POKEAPI_ADDRESS" default:"https://pokeapi.co/api/v2"`
