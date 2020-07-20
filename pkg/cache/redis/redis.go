@@ -5,29 +5,29 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/VictoriaMetrics/fastcache"
 	cachev8 "github.com/go-redis/cache/v8"
 	redisv8 "github.com/go-redis/redis/v8"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
-// RedisConnection stores Redis connection client & information.
-type RedisConnection struct {
-	address        string
-	Client         *redisv8.Client
-	cache          *cachev8.Cache
-	skipLocalCache bool
-	Namespace      string
-	MustAvailable  bool
-	DebugMode      bool
+var (
+	DefaultCacheTTL = 24 * time.Hour
+)
+
+// Connection stores Redis connection client & information.
+type Connection struct {
+	Client        *redisv8.Client
+	cache         *cachev8.Cache
+	Namespace     string
+	MustAvailable bool
+	DebugMode     bool
 }
 
 // NewConnection creates new basic Redis connection.
 func NewConnection(
 	host, port, username, password, namespace string, dbnumber int,
-	localCacheSize int, localCacheTTL time.Duration,
 	mustAvailable, debugMode bool,
-) *RedisConnection {
+) *Connection {
 	client := redisv8.NewClient(&redisv8.Options{
 		Addr:     fmt.Sprintf("%s:%s", host, port),
 		Username: username,
@@ -39,51 +39,44 @@ func NewConnection(
 
 	_, err := client.Ping(ctx).Result()
 	if err != nil && err != redisv8.Nil {
-		log.Error(err, msgErrConnection(client.Options().Addr))
+		log.Error(err, msgErrFailedCommand(client.Options().Addr))
 		if mustAvailable {
 			panic(err)
 		}
 	}
 
 	cacheOpts := &cachev8.Options{
-		Redis: client,
+		Redis:      client,
+		LocalCache: nil,
 	}
 
-	skipLocalCache := true
-	if localCacheSize > 0 {
-		cacheOpts.LocalCache = fastcache.New(localCacheSize << 20)
-		cacheOpts.LocalCacheTTL = localCacheTTL
-		skipLocalCache = false
-	}
-
-	return &RedisConnection{
-		address:        client.Options().Addr,
-		Client:         client,
-		cache:          cachev8.New(cacheOpts),
-		skipLocalCache: skipLocalCache,
-		Namespace:      namespace,
-		MustAvailable:  mustAvailable,
-		DebugMode:      debugMode,
+	return &Connection{
+		Client:        client,
+		cache:         cachev8.New(cacheOpts),
+		Namespace:     namespace,
+		MustAvailable: mustAvailable,
+		DebugMode:     debugMode,
 	}
 }
 
-func (rc *RedisConnection) namespacedKey(key string) string {
-	return fmt.Sprintf("%s:%s", rc.Namespace, key)
+func (c *Connection) namespacedKey(key string) string {
+	return fmt.Sprintf("%s:%s", c.Namespace, key)
 }
 
 // SetCache caches an object using the specified key.
-func (rc *RedisConnection) SetCache(
+func (c *Connection) SetCache(
 	ctx context.Context, key string, value interface{}, ttl time.Duration,
 ) error {
-	err := rc.cache.Once(&cachev8.Item{
-		Ctx:   ctx,
-		Key:   rc.namespacedKey(key),
-		Value: &value,
-		TTL:   ttl,
+	err := c.cache.Once(&cachev8.Item{
+		Ctx:            ctx,
+		Key:            c.namespacedKey(key),
+		Value:          &value,
+		TTL:            ttl,
+		SkipLocalCache: true,
 	})
 	if err != nil {
-		if !rc.MustAvailable {
-			log.Error(err, msgErrConnection(rc.address))
+		if !c.MustAvailable {
+			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 			return nil
 		}
 		return err
@@ -93,19 +86,33 @@ func (rc *RedisConnection) SetCache(
 }
 
 // GetCache gets cache for the specified key and assign the result to value.
-func (rc *RedisConnection) GetCache(
+func (c *Connection) GetCache(
 	ctx context.Context, key string, value interface{},
 ) error {
-	err := rc.cache.Get(ctx, rc.namespacedKey(key), &value)
+	err := c.cache.GetSkippingLocalCache(ctx, c.namespacedKey(key), &value)
 	if err != nil {
-		if err == redisv8.Nil {
-			if rc.DebugMode {
-				log.Warn(msgErrNoCache(rc.namespacedKey(key)))
+		if err == cachev8.ErrCacheMiss {
+			if c.DebugMode {
+				log.Warn(msgErrNoCache(c.namespacedKey(key)))
 			}
 			return nil
 		}
-		if !rc.MustAvailable {
-			log.Error(err, msgErrConnection(rc.address))
+		if !c.MustAvailable {
+			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+// DeleteCache deletes cache in the specified key.
+func (c *Connection) DeleteCache(ctx context.Context, key string) error {
+	err := c.cache.Delete(ctx, c.namespacedKey(key))
+	if err != nil {
+		if !c.MustAvailable {
+			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 			return nil
 		}
 		return err

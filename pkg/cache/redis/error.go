@@ -8,8 +8,8 @@ import (
 var (
 	// ErrNoCache represents a "Cache not found" error.
 	ErrNoCache = errors.New("Cache not found")
-	// ErrConnection represents a "Connection failure" error.
-	ErrConnection = errors.New("Connection failure")
+	// ErrFailedCommand represents a "Failed command" error.
+	ErrFailedCommand = errors.New("Failed command")
 )
 
 // IsErrNoCache checks if the given error is a "Cache not found" error.
@@ -20,18 +20,18 @@ func IsErrNoCache(err error) bool {
 	return err == ErrNoCache
 }
 
-// IsErrConnection checks if the given error is a "Connection failure" error.
-func IsErrConnection(err error) bool {
-	if err == ErrConnection {
+// IsErrFailedCommand checks if the given error is a "Failed command" error.
+func IsErrFailedCommand(err error) bool {
+	if err == ErrFailedCommand {
 		return true
 	}
-	return err == ErrConnection
+	return err == ErrFailedCommand
 }
 
 func msgErrNoCache(key string) string {
 	return fmt.Sprintf("Cache not found with key: %s", key)
 }
 
-func msgErrConnection(address string) string {
-	return fmt.Sprintf("Connection failure on redis host: %s", address)
+func msgErrFailedCommand(address string) string {
+	return fmt.Sprintf("Failed command on redis host: %s", address)
 }

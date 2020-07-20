@@ -14,7 +14,7 @@ type ProviderService interface {
 	CreateProvider(ctx context.Context, shortName, longName string) (*Provider, error)
 	UpdateProvider(ctx context.Context, uuid, shortName, longName string) (*Provider, error)
 	GetProviderByUUID(ctx context.Context, uuid string) (*Provider, error)
-	GetProviders(ctx context.Context, limit int) ([]Provider, error)
+	GetProviders(ctx context.Context, offset, limit int) ([]Provider, error)
 	DeleteProviderByUUID(ctx context.Context, uuid string) error
 }
 
@@ -25,5 +25,5 @@ type ProviderRepository interface {
 	DeleteProviderByUUID(ctx context.Context, uuid string) error
 	GetProviderByUUID(ctx context.Context, uuid string) (*Provider, error)
 	GetProviderByShortName(ctx context.Context, shortName string) (*Provider, error)
-	GetProviders(ctx context.Context, limit int) ([]Provider, error)
+	GetProviders(ctx context.Context, offset, limit int) ([]Provider, error)
 }

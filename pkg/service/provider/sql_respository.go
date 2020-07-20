@@ -117,13 +117,15 @@ func (r *repository) GetProviderByShortName(ctx context.Context, shortName strin
 }
 
 // GetProviders gets all providers in the database.
-func (r *repository) GetProviders(ctx context.Context, limit int) ([]domain.Provider, error) {
+func (r *repository) GetProviders(ctx context.Context, offset, limit int) ([]domain.Provider, error) {
 	var pms []ProviderSQLModel
-	query := r.db
-	if limit > 0 {
-		query = query.Limit(limit)
+	if offset < 0 {
+		offset = 0
 	}
-	if err := query.Find(&pms).Error; err != nil {
+	if limit < 1 {
+		limit = 1
+	}
+	if err := r.db.Offset(offset).Limit(limit).Find(&pms).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}

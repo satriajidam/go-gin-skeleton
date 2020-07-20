@@ -114,9 +114,20 @@ func (h *ProviderHTTPHandler) GetProviderByUUID(ctx *gin.Context) {
 
 // GetProviders gets all providers.
 func (h *ProviderHTTPHandler) GetProviders(ctx *gin.Context) {
+	offsetStr, ok := ctx.GetQuery("offset")
+	if !ok {
+		offsetStr = "0"
+	}
+
+	offsetInt, err := strconv.Atoi(offsetStr)
+	if err != nil {
+		ResponseFailed(ctx, FailedInvalidQuery("offset"), err)
+		return
+	}
+
 	limitStr, ok := ctx.GetQuery("limit")
 	if !ok {
-		limitStr = "0"
+		limitStr = "10"
 	}
 
 	limitInt, err := strconv.Atoi(limitStr)
@@ -125,7 +136,7 @@ func (h *ProviderHTTPHandler) GetProviders(ctx *gin.Context) {
 		return
 	}
 
-	ps, err := h.service.GetProviders(ctx, limitInt)
+	ps, err := h.service.GetProviders(ctx, offsetInt, limitInt)
 	if err != nil {
 		ResponseFailed(ctx, FailedGetEntity(providerEntities), err)
 		return

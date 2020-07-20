@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
 	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
@@ -48,12 +46,9 @@ func main() {
 		cfg.RedisPassword,
 		cfg.RedisNamespace,
 		cfg.RedisDBNumber,
-		cfg.RedisLocalCacheSize,
-		cfg.RedisLocalCacheTTL,
 		cfg.RedisMustAvailable,
 		cfg.RedisDebugMode,
 	)
-	fmt.Println(redisconn)
 
 	httpServer := http.NewServer(
 		cfg.HTTPServerPort,
@@ -66,7 +61,7 @@ func main() {
 	httpServer.CORS.MaxAge = cfg.HTTPServerMaxAge
 
 	providerRepository := provider.NewRepository(dbconn, true)
-	providerService := provider.NewService(providerRepository)
+	providerService := provider.NewService(providerRepository, redisconn)
 	providerHTTPHandler := api.NewProviderHTTPHandler(providerService)
 
 	pokeapiClient := pokeapi.NewClient(cfg.PokeAPIAddressV2, cfg.PokeAPITimeout)
