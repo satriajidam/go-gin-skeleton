@@ -39,10 +39,10 @@ func NewConnection(
 
 	_, err := client.Ping(ctx).Result()
 	if err != nil && err != redisv8.Nil {
+		log.Error(err, msgErrConnection(address))
 		if mustAvailable {
 			panic(err)
 		}
-		log.Error(err, msgConnErr(address))
 	}
 
 	cacheOpts := &cachev8.Options{
@@ -64,4 +64,49 @@ func NewConnection(
 		Namespace:      namespace,
 		MustAvailable:  mustAvailable,
 	}
+}
+
+func (rc *RedisConnection) namespacedKey(key string) string {
+	return fmt.Sprintf("%s:%s", rc.Namespace, key)
+}
+
+// SetCache caches an object using the specified key.
+func (rc *RedisConnection) SetCache(
+	ctx context.Context, key string, value interface{}, ttl time.Duration,
+) error {
+	err := rc.cache.Once(&cachev8.Item{
+		Ctx:   ctx,
+		Key:   rc.namespacedKey(key),
+		Value: &value,
+		TTL:   ttl,
+	})
+	if err != nil {
+		if !rc.MustAvailable {
+			log.Error(err, msgErrConnection(rc.address))
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+// GetCache gets cache for the specified key and assign the result to value.
+func (rc *RedisConnection) GetCache(
+	ctx context.Context, key string, value interface{},
+) error {
+	err := rc.cache.Get(ctx, rc.namespacedKey(key), &value)
+	if err != nil {
+		if err == redisv8.Nil {
+			log.Warn(msgErrNoCache(rc.namespacedKey(key)))
+			return nil
+		}
+		if !rc.MustAvailable {
+			log.Error(err, msgErrConnection(rc.address))
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }

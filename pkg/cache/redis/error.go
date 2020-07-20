@@ -1,15 +1,37 @@
 package redis
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-type ErrNoCache struct {
-	Key string
+var (
+	// ErrNoCache represents a "Cache not found" error.
+	ErrNoCache = errors.New("Cache not found")
+	// ErrConnection represents a "Connection failure" error.
+	ErrConnection = errors.New("Connection failure")
+)
+
+// IsErrNoCache checks if the given error is a "Cache not found" error.
+func IsErrNoCache(err error) bool {
+	if err == ErrNoCache {
+		return true
+	}
+	return err == ErrNoCache
 }
 
-func (e ErrNoCache) Error() string {
-	return fmt.Sprintf("Cache key not found: %s", e.Key)
+// IsErrConnection checks if the given error is a "Connection failure" error.
+func IsErrConnection(err error) bool {
+	if err == ErrConnection {
+		return true
+	}
+	return err == ErrConnection
 }
 
-func msgConnErr(address string) string {
-	return fmt.Sprintf("Connection error on %s redis host", address)
+func msgErrNoCache(key string) string {
+	return fmt.Sprintf("Cache not found with key: %s", key)
+}
+
+func msgErrConnection(address string) string {
+	return fmt.Sprintf("Connection failure on redis host: %s", address)
 }
