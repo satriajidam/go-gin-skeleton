@@ -127,7 +127,6 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 	}
 
 	cacheKey := fmt.Sprintf("bulk_providers:%d:%d", offset, limit)
-
 	_ = s.cache.GetCache(ctx, cacheKey, pms)
 
 	if pms == nil {
