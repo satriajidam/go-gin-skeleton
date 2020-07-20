@@ -22,24 +22,24 @@ type RedisConnection struct {
 	DebugMode      bool
 }
 
-// NewConnection creates new Redis connection.
+// NewConnection creates new basic Redis connection.
 func NewConnection(
 	host, port, username, password, namespace string, dbnumber int,
 	localCacheSize int, localCacheTTL time.Duration,
 	mustAvailable, debugMode bool,
 ) *RedisConnection {
-	address := fmt.Sprintf("%s:%s", host, port)
 	client := redisv8.NewClient(&redisv8.Options{
-		Addr:     address,
+		Addr:     fmt.Sprintf("%s:%s", host, port),
 		Username: username,
 		Password: password,
 		DB:       dbnumber,
 	})
+
 	ctx := context.Background()
 
 	_, err := client.Ping(ctx).Result()
 	if err != nil && err != redisv8.Nil {
-		log.Error(err, msgErrConnection(address))
+		log.Error(err, msgErrConnection(client.Options().Addr))
 		if mustAvailable {
 			panic(err)
 		}
@@ -57,7 +57,7 @@ func NewConnection(
 	}
 
 	return &RedisConnection{
-		address:        address,
+		address:        client.Options().Addr,
 		Client:         client,
 		cache:          cachev8.New(cacheOpts),
 		skipLocalCache: skipLocalCache,
