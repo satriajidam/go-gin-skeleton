@@ -52,7 +52,9 @@ func (s *service) CreateProvider(ctx context.Context, shortName, longName string
 		return nil, err
 	}
 
-	_ = s.cache.SetCache(ctx, p.UUID, p, redis.DefaultCacheTTL)
+	go func() {
+		_ = s.cache.SetCache(ctx, p.UUID, p, redis.DefaultCacheTTL)
+	}()
 
 	return &p, nil
 }
@@ -87,7 +89,9 @@ func (s *service) UpdateProvider(
 		return nil, err
 	}
 
-	_ = s.cache.SetCache(ctx, existing.UUID, existing, redis.DefaultCacheTTL)
+	go func() {
+		_ = s.cache.SetCache(ctx, existing.UUID, existing, redis.DefaultCacheTTL)
+	}()
 
 	return existing, nil
 }
@@ -106,7 +110,9 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 		if err != nil {
 			return nil, err
 		}
-		_ = s.cache.SetCache(ctx, uuid, p, redis.DefaultCacheTTL)
+		go func() {
+			_ = s.cache.SetCache(ctx, uuid, p, redis.DefaultCacheTTL)
+		}()
 	}
 
 	return p, nil
@@ -134,7 +140,9 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 		if err != nil {
 			return nil, err
 		}
-		_ = s.cache.SetCache(ctx, cacheKey, pms, 5*time.Minute)
+		go func() {
+			_ = s.cache.SetCache(ctx, cacheKey, pms, 5*time.Minute)
+		}()
 	}
 
 	return pms, nil
@@ -151,7 +159,9 @@ func (s *service) DeleteProviderByUUID(ctx context.Context, uuid string) error {
 		return err
 	}
 
-	_ = s.cache.DeleteCache(ctx, uuid)
+	go func() {
+		_ = s.cache.DeleteCache(ctx, uuid)
+	}()
 
 	return nil
 }
