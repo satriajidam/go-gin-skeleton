@@ -23,17 +23,15 @@ func (s *service) getProviderByShortName(ctx context.Context, shortName string) 
 	if cached, _ := s.cache.GetCacheByShortName(ctx, shortName); cached == nil {
 		p, err := s.repo.GetProviderByShortName(ctx, shortName)
 		if err != nil {
-			if err == domain.ErrNotFound {
-				return nil, nil
-			}
 			return nil, err
 		}
 
-		go func() {
-			_ = s.cache.SetCache(ctx, *p)
-		}()
-
-		result = p
+		if p != nil {
+			go func() {
+				_ = s.cache.SetCache(ctx, *p)
+			}()
+			result = p
+		}
 	} else {
 		result = cached
 	}
@@ -44,7 +42,7 @@ func (s *service) getProviderByShortName(ctx context.Context, shortName string) 
 // CreateProvider creates new provider.
 func (s *service) CreateProvider(ctx context.Context, shortName, longName string) (*domain.Provider, error) {
 	conflicting, err := s.getProviderByShortName(ctx, shortName)
-	if err != nil {
+	if err != nil && err != domain.ErrNotFound {
 		return nil, err
 	}
 
@@ -74,7 +72,7 @@ func (s *service) UpdateProvider(
 	ctx context.Context, uuid, shortName, longName string,
 ) (*domain.Provider, error) {
 	conflicting, err := s.getProviderByShortName(ctx, shortName)
-	if err != nil {
+	if err != nil && err != domain.ErrNotFound {
 		return nil, err
 	}
 
@@ -113,15 +111,15 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 	if cached, _ := s.cache.GetCacheByUUID(ctx, uuid); cached == nil {
 		p, err := s.repo.GetProviderByUUID(ctx, uuid)
 		if err != nil {
-			if err == domain.ErrNotFound {
-				return nil, nil
-			}
 			return nil, err
 		}
-		go func() {
-			_ = s.cache.SetCache(ctx, *p)
-		}()
-		result = p
+
+		if p != nil {
+			go func() {
+				_ = s.cache.SetCache(ctx, *p)
+			}()
+			result = p
+		}
 	} else {
 		result = cached
 	}
