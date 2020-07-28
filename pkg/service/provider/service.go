@@ -18,9 +18,9 @@ func NewService(repo domain.ProviderRepository, cache domain.ProviderCache) doma
 }
 
 func (s *service) getProviderByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
-	p, _ := s.cache.GetCacheByShortName(ctx, shortName)
+	var result *domain.Provider
 
-	if p == nil {
+	if cached, _ := s.cache.GetCacheByShortName(ctx, shortName); cached == nil {
 		p, err := s.repo.GetProviderByShortName(ctx, shortName)
 		if err != nil {
 			if err == domain.ErrNotFound {
@@ -28,12 +28,17 @@ func (s *service) getProviderByShortName(ctx context.Context, shortName string) 
 			}
 			return nil, err
 		}
+
 		go func() {
 			_ = s.cache.SetCache(ctx, *p)
 		}()
+
+		result = p
+	} else {
+		result = cached
 	}
 
-	return p, nil
+	return result, nil
 }
 
 // CreateProvider creates new provider.
@@ -103,9 +108,9 @@ func (s *service) UpdateProvider(
 
 // GetProviderByUUID gets a provider based on its UUID.
 func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.Provider, error) {
-	p, _ := s.cache.GetCacheByUUID(ctx, uuid)
+	var result *domain.Provider
 
-	if p == nil {
+	if cached, _ := s.cache.GetCacheByUUID(ctx, uuid); cached == nil {
 		p, err := s.repo.GetProviderByUUID(ctx, uuid)
 		if err != nil {
 			if err == domain.ErrNotFound {
@@ -116,13 +121,18 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 		go func() {
 			_ = s.cache.SetCache(ctx, *p)
 		}()
+		result = p
+	} else {
+		result = cached
 	}
 
-	return p, nil
+	return result, nil
 }
 
 // GetProviders gets all providers.
 func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain.Provider, error) {
+	var result []domain.Provider
+
 	if offset < 0 {
 		offset = 0
 	}
@@ -131,9 +141,7 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 		limit = 1
 	}
 
-	ps, _ := s.cache.GetPagedCache(ctx, offset, limit)
-
-	if (ps == nil) || (len(ps) < limit) {
+	if cached, _ := s.cache.GetPagedCache(ctx, offset, limit); (cached == nil) || (len(cached) < limit) {
 		ps, err := s.repo.GetProviders(ctx, offset, limit)
 		if err != nil {
 			return nil, err
@@ -142,9 +150,13 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 		go func() {
 			_ = s.cache.SetPagedCache(ctx, offset, limit, ps)
 		}()
+
+		result = ps
+	} else {
+		result = cached
 	}
 
-	return ps, nil
+	return result, nil
 }
 
 // DeleteProviderByUUID deletes existing provider based on its UUID.
