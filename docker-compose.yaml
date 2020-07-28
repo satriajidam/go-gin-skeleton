@@ -1,26 +1,5 @@
 version: '2.4'
 services:
-  backend:
-    build: .
-    restart: on-failure
-    environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: '3306'
-      MYSQL_USERNAME: root
-      MYSQL_PASSWORD: toor
-      MYSQL_DATABASE: skeleton
-      REDIS_HOST: keydb
-      REDIS_PORT: '6379'
-      REDIS_PASSWORD: unlock
-      REDIS_NAMESPACE: skeleton
-    ports:
-    - 80:80
-    - 9180:9180
-    depends_on:
-      mysql:
-        condition: service_healthy
-      keydb:
-        condition: service_healthy
   mysql:
     image: mysql:5.7.31
     environment:
