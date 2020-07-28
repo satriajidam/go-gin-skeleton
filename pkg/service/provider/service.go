@@ -145,11 +145,12 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 			return nil, err
 		}
 
-		go func() {
-			_ = s.cache.SetPagedCache(ctx, offset, limit, ps)
-		}()
-
-		result = ps
+		if ps != nil {
+			go func() {
+				_ = s.cache.SetPagedCache(ctx, offset, limit, ps)
+			}()
+			result = ps
+		}
 	} else {
 		result = cached
 	}
