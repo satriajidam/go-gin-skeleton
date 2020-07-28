@@ -18,22 +18,20 @@ func NewService(repo domain.ProviderRepository, cache domain.ProviderCache) doma
 }
 
 func (s *service) getProviderByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
-	p, err := s.cache.GetCacheByShortName(ctx, shortName)
-	if err != nil {
-		return nil, err
-	}
+	p, _ := s.cache.GetCacheByShortName(ctx, shortName)
 
-	p, err = s.repo.GetProviderByShortName(ctx, shortName)
-	if err != nil {
-		if err == domain.ErrNotFound {
-			return nil, nil
+	if p == nil {
+		p, err := s.repo.GetProviderByShortName(ctx, shortName)
+		if err != nil {
+			if err == domain.ErrNotFound {
+				return nil, nil
+			}
+			return nil, err
 		}
-		return nil, err
+		go func() {
+			_ = s.cache.SetCache(ctx, *p)
+		}()
 	}
-
-	go func() {
-		_ = s.cache.SetCacheByShortName(ctx, *p)
-	}()
 
 	return p, nil
 }
@@ -60,7 +58,7 @@ func (s *service) CreateProvider(ctx context.Context, shortName, longName string
 	}
 
 	go func() {
-		_ = s.cache.SetCacheByUUID(ctx, p)
+		_ = s.cache.SetCache(ctx, p)
 	}()
 
 	return &p, nil
@@ -97,7 +95,7 @@ func (s *service) UpdateProvider(
 	}
 
 	go func() {
-		_ = s.cache.SetCacheByUUID(ctx, *existing)
+		_ = s.cache.SetCache(ctx, *existing)
 	}()
 
 	return existing, nil
@@ -110,10 +108,13 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 	if p == nil {
 		p, err := s.repo.GetProviderByUUID(ctx, uuid)
 		if err != nil {
+			if err == domain.ErrNotFound {
+				return nil, nil
+			}
 			return nil, err
 		}
 		go func() {
-			_ = s.cache.SetCacheByUUID(ctx, *p)
+			_ = s.cache.SetCache(ctx, *p)
 		}()
 	}
 
@@ -122,34 +123,20 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 
 // GetProviders gets all providers.
 func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain.Provider, error) {
-	var (
-		ps  []domain.Provider
-		err error
-	)
-
 	if offset < 0 {
 		offset = 0
 	}
+
 	if limit < 1 {
 		limit = 1
 	}
 
-	ps, _ = s.cache.GetPagedCache(ctx, offset, limit)
+	ps, _ := s.cache.GetPagedCache(ctx, offset, limit)
 
-	if len(ps) != limit {
-		if ps == nil {
-			ps, err = s.repo.GetProviders(ctx, offset, limit)
-			if err != nil {
-				return nil, err
-			}
-		} else if len(ps) < limit {
-			missingLimit := limit - len(ps)
-			missingOffset := offset + missingLimit + 1
-			missingItems, err := s.repo.GetProviders(ctx, missingOffset, missingLimit)
-			if err != nil {
-				return nil, err
-			}
-			ps = append(ps, missingItems...)
+	if (ps == nil) || (len(ps) < limit) {
+		ps, err := s.repo.GetProviders(ctx, offset, limit)
+		if err != nil {
+			return nil, err
 		}
 
 		go func() {

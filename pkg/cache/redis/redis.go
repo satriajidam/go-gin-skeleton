@@ -76,14 +76,13 @@ func (c *Connection) namespacedKey(key string) string {
 func (c *Connection) SetCache(
 	ctx context.Context, key string, value interface{}, ttl time.Duration,
 ) error {
-	err := c.cache.Once(&cachev8.Item{
+	if err := c.cache.Once(&cachev8.Item{
 		Ctx:            ctx,
 		Key:            c.namespacedKey(key),
-		Value:          &value,
+		Value:          value,
 		TTL:            ttl,
 		SkipLocalCache: true,
-	})
-	if err != nil {
+	}); err != nil {
 		if !c.MustAvailable {
 			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 			return nil
@@ -98,8 +97,7 @@ func (c *Connection) SetCache(
 func (c *Connection) GetCache(
 	ctx context.Context, key string, value interface{},
 ) error {
-	err := c.cache.GetSkippingLocalCache(ctx, c.namespacedKey(key), &value)
-	if err != nil {
+	if err := c.cache.GetSkippingLocalCache(ctx, c.namespacedKey(key), value); err != nil {
 		if err == cachev8.ErrCacheMiss {
 			if c.DebugMode {
 				log.Warn(msgErrNoCache(c.namespacedKey(key)))
@@ -118,8 +116,7 @@ func (c *Connection) GetCache(
 
 // DeleteCache deletes cache in the specified key.
 func (c *Connection) DeleteCache(ctx context.Context, key string) error {
-	err := c.cache.Delete(ctx, c.namespacedKey(key))
-	if err != nil {
+	if err := c.cache.Delete(ctx, c.namespacedKey(key)); err != nil {
 		if !c.MustAvailable {
 			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 			return nil

@@ -43,8 +43,7 @@ func (c *cache) SetCacheByUUID(ctx context.Context, p domain.Provider) error {
 func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
 	var uuid string
 
-	err := c.rc.GetCache(ctx, c.prefixedKey(shortName), &uuid)
-	if err != nil {
+	if err := c.rc.GetCache(ctx, c.prefixedKey(shortName), &uuid); err != nil {
 		return nil, err
 	}
 
@@ -56,10 +55,22 @@ func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*dom
 	return p, nil
 }
 
-// SetCacheByShortName caches a provider using its short name as the cache key.
-func (c *cache) SetCacheByShortName(ctx context.Context, p domain.Provider) error {
-	uuid := p.UUID
-	return c.rc.SetCache(ctx, c.prefixedKey(p.ShortName), &uuid, redis.DefaultCacheTTL)
+// SetCacheByShortName caches a provider UUID using its short name as the cache key.
+func (c *cache) SetCacheByShortName(ctx context.Context, shortName, uuid string) error {
+	return c.rc.SetCache(ctx, c.prefixedKey(shortName), &uuid, redis.DefaultCacheTTL)
+}
+
+// SetCache caches a provider.
+func (c *cache) SetCache(ctx context.Context, p domain.Provider) error {
+	if err := c.SetCacheByUUID(ctx, p); err != nil {
+		return err
+	}
+
+	if err := c.SetCacheByShortName(ctx, p.ShortName, p.UUID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *cache) pagedCacheKey(offset, limit int) string {
@@ -79,7 +90,7 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 		return nil, nil
 	}
 
-	var ps []domain.Provider
+	ps := []domain.Provider{}
 
 	for _, uuid := range uuids {
 		p, err := c.GetCacheByUUID(ctx, uuid)
@@ -99,6 +110,9 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 func (c *cache) SetPagedCache(ctx context.Context, offset, limit int, ps []domain.Provider) error {
 	uuids := []string{}
 	for _, p := range ps {
+		if err := c.SetCache(ctx, p); err != nil {
+			return err
+		}
 		uuids = append(uuids, p.UUID)
 	}
 	return c.rc.SetCache(ctx, c.pagedCacheKey(offset, limit), &uuids, redis.DefaultCacheTTL)
