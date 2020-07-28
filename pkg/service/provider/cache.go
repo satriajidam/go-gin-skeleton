@@ -47,12 +47,15 @@ func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*dom
 		return nil, err
 	}
 
-	p, err := c.GetCacheByUUID(ctx, uuid)
-	if err != nil {
-		return nil, err
+	if uuid != "" {
+		p, err := c.GetCacheByUUID(ctx, uuid)
+		if err != nil {
+			return nil, err
+		}
+		return p, nil
 	}
 
-	return p, nil
+	return nil, nil
 }
 
 // SetCacheByShortName caches a provider UUID using its short name as the cache key.

@@ -107,7 +107,7 @@ func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
 	}
 
 	output.FormatErrFieldValue = func(i interface{}) string {
-		return fmt.Sprint(aurora.BrightRed(fmt.Sprintf("\"%s\"", i)))
+		return fmt.Sprint(aurora.BrightRed(fmt.Sprintf("%s", i)))
 	}
 
 	return output
