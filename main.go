@@ -67,7 +67,8 @@ func main() {
 	httpServer.CORS.MaxAge = cfg.HTTPServerMaxAge
 
 	providerRepository := provider.NewRepository(dbconn, true)
-	providerService := provider.NewService(providerRepository, redisconn)
+	providerCache := provider.NewCache(redisconn)
+	providerService := provider.NewService(providerRepository, providerCache)
 	providerHTTPHandler := api.NewProviderHTTPHandler(providerService)
 
 	pokeapiClient := pokeapi.NewClient(cfg.PokeAPIAddressV2, cfg.PokeAPITimeout)

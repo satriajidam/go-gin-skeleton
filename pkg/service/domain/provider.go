@@ -27,3 +27,14 @@ type ProviderRepository interface {
 	GetProviderByShortName(ctx context.Context, shortName string) (*Provider, error)
 	GetProviders(ctx context.Context, offset, limit int) ([]Provider, error)
 }
+
+// ProviderCache provides methods for interacting with Provider cache.
+type ProviderCache interface {
+	GetCacheByUUID(ctx context.Context, uuid string) (*Provider, error)
+	SetCacheByUUID(ctx context.Context, p Provider) error
+	GetCacheByShortName(ctx context.Context, shortName string) (*Provider, error)
+	SetCacheByShortName(ctx context.Context, p Provider) error
+	GetPagedCache(ctx context.Context, offset, limit int) ([]Provider, error)
+	SetPagedCache(ctx context.Context, offset, limit int, ps []Provider) error
+	DeleteCache(ctx context.Context, p Provider) error
+}
