@@ -23,16 +23,25 @@ type Connection struct {
 	DebugMode     bool
 }
 
+// RedisConfig stores Redis common connection config.
+type RedisConfig struct {
+	Host          string
+	Port          string
+	Username      string
+	Password      string
+	Namespace     string
+	DBNumber      int
+	MustAvailable bool
+	DebugMode     bool
+}
+
 // NewConnection creates new basic Redis connection.
-func NewConnection(
-	host, port, username, password, namespace string, dbnumber int,
-	mustAvailable, debugMode bool,
-) *Connection {
+func NewConnection(conf RedisConfig) *Connection {
 	client := redisv8.NewClient(&redisv8.Options{
-		Addr:     fmt.Sprintf("%s:%s", host, port),
-		Username: username,
-		Password: password,
-		DB:       dbnumber,
+		Addr:     fmt.Sprintf("%s:%s", conf.Host, conf.Port),
+		Username: conf.Username,
+		Password: conf.Password,
+		DB:       conf.DBNumber,
 	})
 
 	ctx := context.Background()
@@ -40,7 +49,7 @@ func NewConnection(
 	_, err := client.Ping(ctx).Result()
 	if err != nil && err != redisv8.Nil {
 		log.Error(err, msgErrFailedCommand(client.Options().Addr))
-		if mustAvailable {
+		if conf.MustAvailable {
 			panic(err)
 		}
 	}
@@ -53,9 +62,9 @@ func NewConnection(
 	return &Connection{
 		Client:        client,
 		cache:         cachev8.New(cacheOpts),
-		Namespace:     namespace,
-		MustAvailable: mustAvailable,
-		DebugMode:     debugMode,
+		Namespace:     conf.Namespace,
+		MustAvailable: conf.MustAvailable,
+		DebugMode:     conf.DebugMode,
 	}
 }
 
@@ -119,4 +128,9 @@ func (c *Connection) DeleteCache(ctx context.Context, key string) error {
 	}
 
 	return nil
+}
+
+// Close closes the client, releasing any open resources.
+func (c *Connection) Close() error {
+	return c.Client.Close()
 }
