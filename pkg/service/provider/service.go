@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
@@ -11,23 +10,40 @@ import (
 )
 
 type service struct {
-	repo  domain.ProviderRepository
-	cache *redis.Connection
+	repo        domain.ProviderRepository
+	cache       *redis.Connection
+	cachePrefix string
 }
 
 // NewService creates new provider service.
 func NewService(repo domain.ProviderRepository, cache *redis.Connection) domain.ProviderService {
-	return &service{repo, cache}
+	return &service{repo, cache, "provider"}
+}
+
+func (s *service) prefixedKey(key string) string {
+	return fmt.Sprintf("%s:%s", s.cachePrefix, key)
 }
 
 func (s *service) getProviderByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
-	p, err := s.repo.GetProviderByShortName(ctx, shortName)
+	var p *domain.Provider
+
+	err := s.cache.GetCache(ctx, s.prefixedKey(shortName), p)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err = s.repo.GetProviderByShortName(ctx, shortName)
 	if err != nil {
 		if err == domain.ErrNotFound {
 			return nil, nil
 		}
 		return nil, err
 	}
+
+	go func() {
+		_ = s.cache.SetCache(ctx, s.prefixedKey(shortName), p, redis.DefaultCacheTTL)
+	}()
+
 	return p, nil
 }
 
@@ -53,7 +69,7 @@ func (s *service) CreateProvider(ctx context.Context, shortName, longName string
 	}
 
 	go func() {
-		_ = s.cache.SetCache(ctx, p.UUID, p, redis.DefaultCacheTTL)
+		_ = s.cache.SetCache(ctx, s.prefixedKey(p.UUID), p, redis.DefaultCacheTTL)
 	}()
 
 	return &p, nil
@@ -90,7 +106,7 @@ func (s *service) UpdateProvider(
 	}
 
 	go func() {
-		_ = s.cache.SetCache(ctx, existing.UUID, existing, redis.DefaultCacheTTL)
+		_ = s.cache.SetCache(ctx, s.prefixedKey(existing.UUID), existing, redis.DefaultCacheTTL)
 	}()
 
 	return existing, nil
@@ -111,7 +127,7 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 			return nil, err
 		}
 		go func() {
-			_ = s.cache.SetCache(ctx, uuid, p, redis.DefaultCacheTTL)
+			_ = s.cache.SetCache(ctx, s.prefixedKey(uuid), p, redis.DefaultCacheTTL)
 		}()
 	}
 
@@ -121,7 +137,7 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 // GetProviders gets all providers.
 func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain.Provider, error) {
 	var (
-		pms []domain.Provider
+		ps  []domain.Provider
 		err error
 	)
 
@@ -132,25 +148,74 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 		limit = 1
 	}
 
-	cacheKey := fmt.Sprintf("bulk_providers:%d:%d", offset, limit)
-	_ = s.cache.GetCache(ctx, cacheKey, pms)
+	cacheKey := fmt.Sprintf("bulk:%d:%d", offset, limit)
+	ps, err = s.getCacheBulkProviders(ctx, s.prefixedKey(cacheKey))
+	if err != nil {
+		return nil, err
+	}
 
-	if pms == nil {
-		pms, err = s.repo.GetProviders(ctx, offset, limit)
+	if ps == nil {
+		ps, err = s.repo.GetProviders(ctx, offset, limit)
 		if err != nil {
 			return nil, err
 		}
-		go func() {
-			_ = s.cache.SetCache(ctx, cacheKey, pms, 5*time.Minute)
-		}()
+	} else if len(ps) < limit {
+		missingLimit := limit - len(ps)
+		missingOffset := offset + missingLimit + 1
+		missingPS, err := s.repo.GetProviders(ctx, missingOffset, missingLimit)
+		if err != nil {
+			return nil, err
+		}
+		ps = append(ps, missingPS...)
 	}
 
-	return pms, nil
+	go func() {
+		_ = s.setCacheBulkProviders(ctx, s.prefixedKey(cacheKey), ps)
+	}()
+
+	return ps, nil
+}
+
+func (s *service) getCacheBulkProviders(ctx context.Context, cacheKey string) ([]domain.Provider, error) {
+	var uuids []string
+
+	err := s.cache.GetCache(ctx, s.prefixedKey(cacheKey), uuids)
+	if err != nil {
+		return nil, err
+	}
+
+	if uuids == nil {
+		return nil, nil
+	}
+
+	var ps []domain.Provider
+
+	for _, uuid := range uuids {
+		var p *domain.Provider
+		err := s.cache.GetCache(ctx, s.prefixedKey(uuid), p)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			continue
+		}
+		ps = append(ps, *p)
+	}
+
+	return ps, nil
+}
+
+func (s *service) setCacheBulkProviders(ctx context.Context, cacheKey string, ps []domain.Provider) error {
+	uuids := []string{}
+	for _, p := range ps {
+		uuids = append(uuids, p.UUID)
+	}
+	return s.cache.SetCache(ctx, s.prefixedKey(cacheKey), uuids, redis.DefaultCacheTTL)
 }
 
 // DeleteProviderByUUID deletes existing provider based on its UUID.
 func (s *service) DeleteProviderByUUID(ctx context.Context, uuid string) error {
-	_, err := s.GetProviderByUUID(ctx, uuid)
+	p, err := s.GetProviderByUUID(ctx, uuid)
 	if err != nil {
 		return err
 	}
@@ -160,7 +225,8 @@ func (s *service) DeleteProviderByUUID(ctx context.Context, uuid string) error {
 	}
 
 	go func() {
-		_ = s.cache.DeleteCache(ctx, uuid)
+		_ = s.cache.DeleteCache(ctx, s.prefixedKey(p.UUID))
+		_ = s.cache.DeleteCache(ctx, s.prefixedKey(p.ShortName))
 	}()
 
 	return nil
