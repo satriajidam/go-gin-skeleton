@@ -24,14 +24,14 @@ func (c *cache) prefixedKey(key string) string {
 
 // GetCacheByUUID gets a cached provider based on its UUID.
 func (c *cache) GetCacheByUUID(ctx context.Context, uuid string) (*domain.Provider, error) {
-	var p *domain.Provider
+	var p domain.Provider
 
-	err := c.rc.GetCache(ctx, c.prefixedKey(uuid), p)
+	err := c.rc.GetCache(ctx, c.prefixedKey(uuid), &p)
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	return &p, nil
 }
 
 // SetCacheByUUID caches a provider using its UUID as the cache key.

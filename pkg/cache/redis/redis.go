@@ -76,7 +76,7 @@ func (c *Connection) namespacedKey(key string) string {
 func (c *Connection) SetCache(
 	ctx context.Context, key string, value interface{}, ttl time.Duration,
 ) error {
-	if err := c.cache.Once(&cachev8.Item{
+	if err := c.cache.Set(&cachev8.Item{
 		Ctx:            ctx,
 		Key:            c.namespacedKey(key),
 		Value:          value,
@@ -94,9 +94,7 @@ func (c *Connection) SetCache(
 }
 
 // GetCache gets cache for the specified key and assign the result to value.
-func (c *Connection) GetCache(
-	ctx context.Context, key string, value interface{},
-) error {
+func (c *Connection) GetCache(ctx context.Context, key string, value interface{}) error {
 	if err := c.cache.GetSkippingLocalCache(ctx, c.namespacedKey(key), value); err != nil {
 		if err == cachev8.ErrCacheMiss {
 			if c.DebugMode {
