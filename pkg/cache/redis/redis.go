@@ -16,27 +16,25 @@ var (
 
 // Connection stores Redis connection client & information.
 type Connection struct {
-	Client        *redisv8.Client
-	cache         *cachev8.Cache
-	Namespace     string
-	MustAvailable bool
-	DebugMode     bool
+	Client    *redisv8.Client
+	cache     *cachev8.Cache
+	namespace string
+	DebugMode bool
 }
 
 // RedisConfig stores Redis common connection config.
 type RedisConfig struct {
-	Host          string
-	Port          string
-	Username      string
-	Password      string
-	Namespace     string
-	DBNumber      int
-	MustAvailable bool
-	DebugMode     bool
+	Host      string
+	Port      string
+	Username  string
+	Password  string
+	Namespace string
+	DBNumber  int
+	DebugMode bool
 }
 
 // NewConnection creates new basic Redis connection.
-func NewConnection(conf RedisConfig) *Connection {
+func NewConnection(conf RedisConfig) (*Connection, error) {
 	client := redisv8.NewClient(&redisv8.Options{
 		Addr:     fmt.Sprintf("%s:%s", conf.Host, conf.Port),
 		Username: conf.Username,
@@ -44,32 +42,24 @@ func NewConnection(conf RedisConfig) *Connection {
 		DB:       conf.DBNumber,
 	})
 
-	ctx := context.Background()
-
-	_, err := client.Ping(ctx).Result()
-	if err != nil && err != redisv8.Nil {
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
 		log.Error(err, msgErrFailedCommand(client.Options().Addr))
-		if conf.MustAvailable {
-			panic(err)
-		}
-	}
-
-	cacheOpts := &cachev8.Options{
-		Redis:      client,
-		LocalCache: nil,
+		return nil, err
 	}
 
 	return &Connection{
-		Client:        client,
-		cache:         cachev8.New(cacheOpts),
-		Namespace:     conf.Namespace,
-		MustAvailable: conf.MustAvailable,
-		DebugMode:     conf.DebugMode,
-	}
+		Client: client,
+		cache: cachev8.New(&cachev8.Options{
+			Redis:      client,
+			LocalCache: nil,
+		}),
+		namespace: conf.Namespace,
+		DebugMode: conf.DebugMode,
+	}, nil
 }
 
 func (c *Connection) namespacedKey(key string) string {
-	return fmt.Sprintf("%s:%s", c.Namespace, key)
+	return fmt.Sprintf("%s:%s", c.namespace, key)
 }
 
 // SetCache caches an object using the specified key.
@@ -83,13 +73,9 @@ func (c *Connection) SetCache(
 		TTL:            ttl,
 		SkipLocalCache: true,
 	}); err != nil {
-		if !c.MustAvailable {
-			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
-			return nil
-		}
+		log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 		return err
 	}
-
 	return nil
 }
 
@@ -100,28 +86,20 @@ func (c *Connection) GetCache(ctx context.Context, key string, value interface{}
 			if c.DebugMode {
 				log.Warn(msgErrNoCache(c.namespacedKey(key)))
 			}
-			return nil
+			return ErrNoCache
 		}
-		if !c.MustAvailable {
-			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
-			return nil
-		}
+		log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 		return err
 	}
-
 	return nil
 }
 
 // DeleteCache deletes cache in the specified key.
 func (c *Connection) DeleteCache(ctx context.Context, key string) error {
 	if err := c.cache.Delete(ctx, c.namespacedKey(key)); err != nil {
-		if !c.MustAvailable {
-			log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
-			return nil
-		}
+		log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
 		return err
 	}
-
 	return nil
 }
 
