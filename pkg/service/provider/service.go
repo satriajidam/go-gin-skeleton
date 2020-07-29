@@ -154,13 +154,13 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 		}
 	} else if len(cached) < limit {
 		newLimit := limit - len(cached)
-		newOffset := offset + newLimit + 1
+		newOffset := offset + newLimit
 		ps, err := s.repo.GetProviders(ctx, newOffset, newLimit)
 		if err != nil {
 			return nil, err
 		}
 
-		ps = append(ps, cached...)
+		ps = append(cached, ps...)
 
 		go func() {
 			_ = s.cache.SetPagedCache(ctx, offset, limit, ps)

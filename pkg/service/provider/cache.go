@@ -38,7 +38,7 @@ func (c *cache) GetCacheByUUID(ctx context.Context, uuid string) (*domain.Provid
 
 // SetCacheByUUID caches a provider using its UUID as the cache key.
 func (c *cache) SetCacheByUUID(ctx context.Context, p domain.Provider) error {
-	return c.rc.SetCache(ctx, c.prefixedKey(p.UUID), &p, redis.DefaultCacheTTL)
+	return c.rc.SetCache(ctx, c.prefixedKey(p.UUID), p, redis.DefaultCacheTTL)
 }
 
 // GetCacheByShortName gets a cached provider based on its short name.
@@ -61,7 +61,7 @@ func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*dom
 
 // SetCacheByShortName caches a provider UUID using its short name as the cache key.
 func (c *cache) SetCacheByShortName(ctx context.Context, shortName, uuid string) error {
-	return c.rc.SetCache(ctx, c.prefixedKey(shortName), &uuid, redis.DefaultCacheTTL)
+	return c.rc.SetCache(ctx, c.prefixedKey(shortName), uuid, redis.DefaultCacheTTL)
 }
 
 // SetCache caches a provider.
@@ -122,7 +122,7 @@ func (c *cache) SetPagedCache(ctx context.Context, offset, limit int, ps []domai
 		}
 		uuids = append(uuids, p.UUID)
 	}
-	return c.rc.SetCache(ctx, c.pagedCacheKey(offset, limit), &uuids, redis.DefaultCacheTTL)
+	return c.rc.SetCache(ctx, c.pagedCacheKey(offset, limit), uuids, redis.DefaultCacheTTL)
 }
 
 // DeleteCache removes a cached provider.
