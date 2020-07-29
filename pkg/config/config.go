@@ -47,7 +47,7 @@ type Config struct {
 	MySQLPassword string `envconfig:"MYSQL_PASSWORD" default:""`
 	MySQLDatabase string `envconfig:"MYSQL_DATABASE" default:""`
 	// List of accepted MySQL parameters: https://github.com/go-sql-driver/mysql#parameters
-	MySQLParams        string `envconfig:"MYSQL_PARAMS" default:"charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local"`
+	MySQLParams        string `envconfig:"MYSQL_PARAMS" default:"interpolateParams=true&charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local"`
 	MySQLDebugMode     bool   `envconfig:"MYSQL_DEBUG_MODE" default:"true"`
 	MySQLMaxIdleConns  int    `envconfig:"MYSQL_MAX_IDLE_CONNS" default:"0"`
 	MySQLMaxOpenConns  int    `envconfig:"MYSQL_MAX_OPEN_CONNS" default:"0"`
