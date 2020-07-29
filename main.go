@@ -39,15 +39,14 @@ func main() {
 		panic(err)
 	}
 
-	redisconn := redis.NewConnection(redis.RedisConfig{
-		Host:          cfg.RedisHost,
-		Port:          cfg.RedisPort,
-		Username:      cfg.RedisUsername,
-		Password:      cfg.RedisPassword,
-		Namespace:     cfg.RedisNamespace,
-		DBNumber:      cfg.RedisDBNumber,
-		MustAvailable: cfg.RedisMustAvailable,
-		DebugMode:     cfg.RedisDebugMode,
+	redisconn, err := redis.NewConnection(redis.RedisConfig{
+		Host:      cfg.RedisHost,
+		Port:      cfg.RedisPort,
+		Username:  cfg.RedisUsername,
+		Password:  cfg.RedisPassword,
+		Namespace: cfg.RedisNamespace,
+		DBNumber:  cfg.RedisDBNumber,
+		DebugMode: cfg.RedisDebugMode,
 	})
 	defer func() {
 		err := redisconn.Close()
@@ -55,6 +54,9 @@ func main() {
 			panic(err)
 		}
 	}()
+	if err != nil && cfg.RedisMustAvailable {
+		panic(err)
+	}
 
 	httpServer := http.NewServer(
 		cfg.HTTPServerPort,
