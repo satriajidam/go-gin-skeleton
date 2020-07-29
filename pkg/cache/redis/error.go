@@ -2,7 +2,6 @@ package redis
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -26,12 +25,4 @@ func IsErrFailedCommand(err error) bool {
 		return true
 	}
 	return err == ErrFailedCommand
-}
-
-func msgErrNoCache(key string) string {
-	return fmt.Sprintf("Cache not found with key: %s", key)
-}
-
-func msgErrFailedCommand(address string) string {
-	return fmt.Sprintf("Failed command on redis host: %s", address)
 }

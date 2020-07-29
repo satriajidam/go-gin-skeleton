@@ -42,12 +42,7 @@ func NewConnection(conf RedisConfig) (*Connection, error) {
 		DB:       conf.DBNumber,
 	})
 
-	if _, err := client.Ping(context.Background()).Result(); err != nil {
-		log.Error(err, msgErrFailedCommand(client.Options().Addr))
-		return nil, err
-	}
-
-	return &Connection{
+	connection := Connection{
 		Client: client,
 		cache: cachev8.New(&cachev8.Options{
 			Redis:      client,
@@ -55,7 +50,30 @@ func NewConnection(conf RedisConfig) (*Connection, error) {
 		}),
 		namespace: conf.Namespace,
 		DebugMode: conf.DebugMode,
-	}, nil
+	}
+
+	if _, err := connection.Client.Ping(context.Background()).Result(); err != nil {
+		connection.logError(err)
+		return nil, err
+	}
+
+	return &connection, nil
+}
+
+func (c *Connection) logError(err error) {
+	log.Stderr().Error().
+		Timestamp().
+		Str("redisHost", c.Client.Options().Addr).
+		Err(err).
+		Msg("Redis error")
+}
+
+func (c *Connection) logWarn(err error) {
+	log.Stdout().Warn().
+		Timestamp().
+		Str("redisHost", c.Client.Options().Addr).
+		Err(err).
+		Msg("Redis warning")
 }
 
 func (c *Connection) namespacedKey(key string) string {
@@ -73,7 +91,7 @@ func (c *Connection) SetCache(
 		TTL:            ttl,
 		SkipLocalCache: true,
 	}); err != nil {
-		log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
+		c.logError(err)
 		return err
 	}
 	return nil
@@ -84,11 +102,11 @@ func (c *Connection) GetCache(ctx context.Context, key string, value interface{}
 	if err := c.cache.GetSkippingLocalCache(ctx, c.namespacedKey(key), value); err != nil {
 		if err == cachev8.ErrCacheMiss {
 			if c.DebugMode {
-				log.Warn(msgErrNoCache(c.namespacedKey(key)))
+				c.logWarn(fmt.Errorf("Cache not found with key: %s", c.namespacedKey(key)))
 			}
 			return ErrNoCache
 		}
-		log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
+		c.logError(err)
 		return err
 	}
 	return nil
@@ -97,7 +115,7 @@ func (c *Connection) GetCache(ctx context.Context, key string, value interface{}
 // DeleteCache deletes cache in the specified key.
 func (c *Connection) DeleteCache(ctx context.Context, key string) error {
 	if err := c.cache.Delete(ctx, c.namespacedKey(key)); err != nil {
-		log.Error(err, msgErrFailedCommand(c.Client.Options().Addr))
+		c.logError(err)
 		return err
 	}
 	return nil
