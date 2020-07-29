@@ -53,27 +53,39 @@ func NewConnection(conf RedisConfig) (*Connection, error) {
 	}
 
 	if _, err := connection.Client.Ping(context.Background()).Result(); err != nil {
-		connection.logError(err)
+		connection.LogError(err, "")
 		return nil, err
 	}
 
 	return &connection, nil
 }
 
-func (c *Connection) logError(err error) {
+// LogError prints Redis connection error log to stderr.
+func (c *Connection) LogError(err error, msg string) {
+	printMsg := "Redis error"
+	if msg != "" {
+		printMsg = fmt.Sprintf("%s: %s", printMsg, msg)
+	}
+
 	log.Stderr().Error().
 		Timestamp().
 		Str("redisHost", c.Client.Options().Addr).
 		Err(err).
-		Msg("Redis error")
+		Msg(printMsg)
 }
 
-func (c *Connection) logWarn(err error) {
+// LogWarn prints Redis connection warning log to stdout.
+func (c *Connection) LogWarn(err error, msg string) {
+	printMsg := "Redis warning"
+	if msg != "" {
+		printMsg = fmt.Sprintf("%s: %s", printMsg, msg)
+	}
+
 	log.Stdout().Warn().
 		Timestamp().
 		Str("redisHost", c.Client.Options().Addr).
 		Err(err).
-		Msg("Redis warning")
+		Msg(printMsg)
 }
 
 func (c *Connection) namespacedKey(key string) string {
@@ -91,7 +103,7 @@ func (c *Connection) SetCache(
 		TTL:            ttl,
 		SkipLocalCache: true,
 	}); err != nil {
-		c.logError(err)
+		c.LogError(err, "")
 		return err
 	}
 	return nil
@@ -102,11 +114,11 @@ func (c *Connection) GetCache(ctx context.Context, key string, value interface{}
 	if err := c.cache.GetSkippingLocalCache(ctx, c.namespacedKey(key), value); err != nil {
 		if err == cachev8.ErrCacheMiss {
 			if c.DebugMode {
-				c.logWarn(fmt.Errorf("Cache not found with key: %s", c.namespacedKey(key)))
+				c.LogWarn(cachev8.ErrCacheMiss, fmt.Sprintf("Missing key: '%s'", c.namespacedKey(key)))
 			}
 			return ErrNoCache
 		}
-		c.logError(err)
+		c.LogError(err, "")
 		return err
 	}
 	return nil
@@ -115,7 +127,7 @@ func (c *Connection) GetCache(ctx context.Context, key string, value interface{}
 // DeleteCache deletes cache in the specified key.
 func (c *Connection) DeleteCache(ctx context.Context, key string) error {
 	if err := c.cache.Delete(ctx, c.namespacedKey(key)); err != nil {
-		c.logError(err)
+		c.LogError(err, "")
 		return err
 	}
 	return nil

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/satriajidam/go-gin-skeleton/pkg/log"
+	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
 )
 
@@ -35,20 +35,20 @@ func (pm *ProviderSQLModel) toProvider() *domain.Provider {
 }
 
 type repository struct {
-	db *gorm.DB
+	conn *sql.Connection
 }
 
 // NewRepository creates new provider repository.
-func NewRepository(db *gorm.DB, automigrate bool) domain.ProviderRepository {
+func NewRepository(conn *sql.Connection, automigrate bool) domain.ProviderRepository {
 	if automigrate {
-		db.AutoMigrate(&ProviderSQLModel{})
+		conn.DB.AutoMigrate(&ProviderSQLModel{})
 	}
-	return &repository{db}
+	return &repository{conn}
 }
 
 // CreateProvider creates new provider in the database.
 func (r *repository) CreateProvider(ctx context.Context, p domain.Provider) error {
-	if err := r.db.Create(&ProviderSQLModel{
+	if err := r.conn.DB.Create(&ProviderSQLModel{
 		UUID:      p.UUID,
 		ShortName: p.ShortName,
 		LongName:  p.LongName,
@@ -56,7 +56,7 @@ func (r *repository) CreateProvider(ctx context.Context, p domain.Provider) erro
 		UpdatedAt: time.Now(),
 		DeletedAt: nil,
 	}).Error; err != nil {
-		log.Error(err, "Failed creating new provider")
+		r.conn.LogError(err, "Failed creating new provider")
 		return err
 	}
 	return nil
@@ -64,7 +64,7 @@ func (r *repository) CreateProvider(ctx context.Context, p domain.Provider) erro
 
 // UpdateProvider updates the existing provider in the database.
 func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) error {
-	if err := r.db.Model(&ProviderSQLModel{}).
+	if err := r.conn.DB.Model(&ProviderSQLModel{}).
 		Where("uuid = ? AND deleted_at IS NULL", p.UUID).Updates(
 		map[string]interface{}{
 			"short_name": p.ShortName,
@@ -75,7 +75,7 @@ func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) erro
 		if gorm.IsRecordNotFoundError(err) {
 			return domain.ErrNotFound
 		}
-		log.Error(err, fmt.Sprintf("Failed updating provider with '%s' UUID", p.UUID))
+		r.conn.LogError(err, fmt.Sprintf("Failed updating provider with '%s' UUID", p.UUID))
 		return err
 	}
 	return nil
@@ -83,8 +83,8 @@ func (r *repository) UpdateProvider(ctx context.Context, p domain.Provider) erro
 
 // DeleteProviderByUUID deletes existing provider in the database based on its UUID.
 func (r *repository) DeleteProviderByUUID(ctx context.Context, uuid string) error {
-	if err := r.db.Where("uuid = ?", uuid).Delete(&ProviderSQLModel{}).Error; err != nil {
-		log.Error(err, fmt.Sprintf("Failed deleting provider with '%s' UUID", uuid))
+	if err := r.conn.DB.Where("uuid = ?", uuid).Delete(&ProviderSQLModel{}).Error; err != nil {
+		r.conn.LogError(err, fmt.Sprintf("Failed deleting provider with '%s' UUID", uuid))
 		return err
 	}
 	return nil
@@ -93,11 +93,11 @@ func (r *repository) DeleteProviderByUUID(ctx context.Context, uuid string) erro
 // GetProviderByUUID gets a provider in the database based on its UUID.
 func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domain.Provider, error) {
 	var pm ProviderSQLModel
-	if err := r.db.Where("uuid = ? AND deleted_at IS NULL", uuid).First(&pm).Error; err != nil {
+	if err := r.conn.DB.Where("uuid = ? AND deleted_at IS NULL", uuid).First(&pm).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, domain.ErrNotFound
 		}
-		log.Error(err, fmt.Sprintf("Failed getting provider with '%s' UUID", uuid))
+		r.conn.LogError(err, fmt.Sprintf("Failed getting provider with '%s' UUID", uuid))
 		return nil, err
 	}
 	return pm.toProvider(), nil
@@ -106,11 +106,11 @@ func (r *repository) GetProviderByUUID(ctx context.Context, uuid string) (*domai
 // GetProviderByShortName gets a provider in the database based on its short name.
 func (r *repository) GetProviderByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
 	var pm ProviderSQLModel
-	if err := r.db.Where("short_name = ? AND deleted_at IS NULL", shortName).First(&pm).Error; err != nil {
+	if err := r.conn.DB.Where("short_name = ? AND deleted_at IS NULL", shortName).First(&pm).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, domain.ErrNotFound
 		}
-		log.Error(err, fmt.Sprintf("Failed getting provider with '%s' short name", shortName))
+		r.conn.LogError(err, fmt.Sprintf("Failed getting provider with '%s' short name", shortName))
 		return nil, err
 	}
 	return pm.toProvider(), nil
@@ -125,11 +125,11 @@ func (r *repository) GetProviders(ctx context.Context, offset, limit int) ([]dom
 	if limit < 1 {
 		limit = 1
 	}
-	if err := r.db.Offset(offset).Limit(limit).Find(&pms).Error; err != nil {
+	if err := r.conn.DB.Offset(offset).Limit(limit).Find(&pms).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
-		log.Error(err, "Failed getting providers")
+		r.conn.LogError(err, "Failed getting providers")
 		return nil, err
 	}
 	results := []domain.Provider{}

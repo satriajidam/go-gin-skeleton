@@ -12,7 +12,7 @@ import (
 
 // NewConnection creates a new connection to a PostgreSQL database using provided
 // connection configs.
-func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
+func NewConnection(conf sql.DBConfig) (*sql.Connection, error) {
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?%s",
 		conf.Username,
@@ -23,16 +23,16 @@ func NewConnection(conf sql.DBConfig) (*gorm.DB, error) {
 		conf.Params,
 	)
 
-	dbconn, err := gorm.Open("postgres", dsn)
+	db, err := gorm.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	dbconn.DB().SetMaxIdleConns(conf.MaxIdleConns)
-	dbconn.DB().SetMaxOpenConns(conf.MaxOpenConns)
+	db.DB().SetMaxIdleConns(conf.MaxIdleConns)
+	db.DB().SetMaxOpenConns(conf.MaxOpenConns)
 
-	dbconn.SingularTable(conf.SingularTable)
-	dbconn.LogMode(conf.DebugMode)
+	db.SingularTable(conf.SingularTable)
+	db.LogMode(conf.DebugMode)
 
-	return dbconn, nil
+	return sql.NewConnection(db, conf.Host, conf.Port, "PostgreSQL"), nil
 }

@@ -26,8 +26,10 @@ func (c *cache) prefixedKey(key string) string {
 func (c *cache) GetCacheByUUID(ctx context.Context, uuid string) (*domain.Provider, error) {
 	var p domain.Provider
 
-	err := c.rc.GetCache(ctx, c.prefixedKey(uuid), &p)
-	if err != nil {
+	if err := c.rc.GetCache(ctx, c.prefixedKey(uuid), &p); err != nil {
+		if err == redis.ErrNoCache {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -44,15 +46,14 @@ func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*dom
 	var uuid string
 
 	if err := c.rc.GetCache(ctx, c.prefixedKey(shortName), &uuid); err != nil {
+		if err == redis.ErrNoCache {
+			return nil, nil
+		}
 		return nil, err
 	}
 
 	if uuid != "" {
-		p, err := c.GetCacheByUUID(ctx, uuid)
-		if err != nil {
-			return nil, err
-		}
-		return p, nil
+		return c.GetCacheByUUID(ctx, uuid)
 	}
 
 	return nil, nil
@@ -86,6 +87,9 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 
 	err := c.rc.GetCache(ctx, c.pagedCacheKey(offset, limit), &uuids)
 	if err != nil {
+		if err == redis.ErrNoCache {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -97,7 +101,7 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 
 	for _, uuid := range uuids {
 		p, err := c.GetCacheByUUID(ctx, uuid)
-		if err != nil {
+		if err != nil && err != redis.ErrNoCache {
 			return nil, err
 		}
 		if p == nil {
