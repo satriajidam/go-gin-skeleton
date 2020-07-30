@@ -97,7 +97,7 @@ func (c *cache) pagedCacheKey(offset, limit int) string {
 	return c.prefixedKey(fmt.Sprintf("paged:%d:%d", offset, limit))
 }
 
-func (c *cache) fillPagedCache(ctx context.Context, uuids []string) ([]domain.Provider, error) {
+func (c *cache) getPagedCache(ctx context.Context, uuids []string) ([]domain.Provider, error) {
 	ps := []domain.Provider{}
 
 	for _, uuid := range uuids {
@@ -130,7 +130,7 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 		return nil, nil
 	}
 
-	return c.fillPagedCache(ctx, uuids)
+	return c.getPagedCache(ctx, uuids)
 }
 
 // SetPagedCache caches paged providers using the offset & limit as the cache key.
