@@ -153,8 +153,8 @@ func (c *cache) DeleteAllPagedCache(ctx context.Context) error {
 	return nil
 }
 
-// CleanCache cleans all related caches.
-func (c *cache) CleanCache(ctx context.Context, p domain.Provider) error {
+// DeleteCache removes all caches that store value of the given provider.
+func (c *cache) DeleteCache(ctx context.Context, p domain.Provider) error {
 	if err := c.DeleteCacheByUUID(ctx, p.UUID); err != nil {
 		return err
 	}
