@@ -173,7 +173,7 @@ func (s *service) DeleteProviderByUUID(ctx context.Context, uuid string) error {
 	}
 
 	go func() {
-		_ = s.cache.DeleteCache(ctx, *p)
+		_ = s.cache.CleanCache(ctx, *p)
 	}()
 
 	return nil

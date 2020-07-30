@@ -32,11 +32,13 @@ type ProviderRepository interface {
 type ProviderCache interface {
 	GetCacheByUUID(ctx context.Context, uuid string) (*Provider, error)
 	SetCacheByUUID(ctx context.Context, p Provider) error
+	DeleteCacheByUUID(ctx context.Context, uuid string) error
 	GetCacheByShortName(ctx context.Context, shortName string) (*Provider, error)
 	SetCacheByShortName(ctx context.Context, shortName, uuid string) error
+	DeleteCacheByShortName(ctx context.Context, shortName string) error
 	SetCache(ctx context.Context, p Provider) error
 	GetPagedCache(ctx context.Context, offset, limit int) ([]Provider, error)
 	SetPagedCache(ctx context.Context, offset, limit int, ps []Provider) error
 	DeleteAllPagedCache(ctx context.Context) error
-	DeleteCache(ctx context.Context, p Provider) error
+	CleanCache(ctx context.Context, p Provider) error
 }

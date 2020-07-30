@@ -47,6 +47,11 @@ func (c *cache) SetCacheByUUID(ctx context.Context, p domain.Provider) error {
 	return c.rc.SetCache(ctx, c.prefixedKey(p.UUID), p, singleCacheTTL)
 }
 
+// DeleteCacheByUUID removes a cached provider based on its UUID.
+func (c *cache) DeleteCacheByUUID(ctx context.Context, uuid string) error {
+	return c.rc.DeleteCache(ctx, c.prefixedKey(uuid))
+}
+
 // GetCacheByShortName gets a cached provider based on its short name.
 func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*domain.Provider, error) {
 	var uuid string
@@ -70,6 +75,11 @@ func (c *cache) SetCacheByShortName(ctx context.Context, shortName, uuid string)
 	return c.rc.SetCache(ctx, c.prefixedKey(shortName), uuid, singleCacheTTL)
 }
 
+// DeleteCacheByShortName removes a cached provider based on its short name.
+func (c *cache) DeleteCacheByShortName(ctx context.Context, shortName string) error {
+	return c.rc.DeleteCache(ctx, c.prefixedKey(shortName))
+}
+
 // SetCache caches a provider.
 func (c *cache) SetCache(ctx context.Context, p domain.Provider) error {
 	if err := c.SetCacheByUUID(ctx, p); err != nil {
@@ -85,6 +95,23 @@ func (c *cache) SetCache(ctx context.Context, p domain.Provider) error {
 
 func (c *cache) pagedCacheKey(offset, limit int) string {
 	return c.prefixedKey(fmt.Sprintf("paged:%d:%d", offset, limit))
+}
+
+func (c *cache) fillPagedCache(ctx context.Context, uuids []string) ([]domain.Provider, error) {
+	ps := []domain.Provider{}
+
+	for _, uuid := range uuids {
+		p, err := c.GetCacheByUUID(ctx, uuid)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			return nil, nil
+		}
+		ps = append(ps, *p)
+	}
+
+	return ps, nil
 }
 
 // GetPagedCache gets paged providers based on the offset & limit.
@@ -103,20 +130,7 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 		return nil, nil
 	}
 
-	ps := []domain.Provider{}
-
-	for _, uuid := range uuids {
-		p, err := c.GetCacheByUUID(ctx, uuid)
-		if err != nil {
-			return nil, err
-		}
-		if p == nil {
-			return nil, nil
-		}
-		ps = append(ps, *p)
-	}
-
-	return ps, nil
+	return c.fillPagedCache(ctx, uuids)
 }
 
 // SetPagedCache caches paged providers using the offset & limit as the cache key.
@@ -139,13 +153,13 @@ func (c *cache) DeleteAllPagedCache(ctx context.Context) error {
 	return nil
 }
 
-// DeleteCache removes a cached provider & all paged caches.
-func (c *cache) DeleteCache(ctx context.Context, p domain.Provider) error {
-	if err := c.rc.DeleteCache(ctx, c.prefixedKey(p.UUID)); err != nil {
+// CleanCache cleans all related caches.
+func (c *cache) CleanCache(ctx context.Context, p domain.Provider) error {
+	if err := c.DeleteCacheByUUID(ctx, p.UUID); err != nil {
 		return err
 	}
 
-	if err := c.rc.DeleteCache(ctx, c.prefixedKey(p.ShortName)); err != nil {
+	if err := c.DeleteCacheByShortName(ctx, p.ShortName); err != nil {
 		return err
 	}
 
