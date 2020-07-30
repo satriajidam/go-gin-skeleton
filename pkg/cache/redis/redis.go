@@ -124,12 +124,31 @@ func (c *Connection) GetCache(ctx context.Context, key string, value interface{}
 	return nil
 }
 
-// DeleteCache deletes cache in the specified key.
+// DeleteCache deletes a single cache with the specified key.
 func (c *Connection) DeleteCache(ctx context.Context, key string) error {
 	if err := c.cache.Delete(ctx, c.namespacedKey(key)); err != nil {
 		c.LogError(err, "")
 		return err
 	}
+	return nil
+}
+
+// DeleteCacheByPrefix deletes multiple caches that matched the given prefix key.
+func (c *Connection) DeleteCacheByPrefix(ctx context.Context, prefix string) error {
+	iter := c.Client.Scan(ctx, 0, c.namespacedKey(prefix), 0).Iterator()
+
+	for iter.Next(ctx) {
+		if err := c.cache.Delete(ctx, iter.Val()); err != nil {
+			c.LogError(err, "")
+			return err
+		}
+	}
+
+	if err := iter.Err(); err != nil {
+		c.LogError(err, "")
+		return err
+	}
+
 	return nil
 }
 

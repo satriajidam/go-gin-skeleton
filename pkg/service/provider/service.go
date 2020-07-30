@@ -28,7 +28,7 @@ func (s *service) getProviderByShortName(ctx context.Context, shortName string) 
 
 		if p != nil {
 			go func() {
-				_ = s.cache.SetCache(ctx, *p)
+				_ = s.cache.SetCacheByShortName(ctx, p.ShortName, p.UUID)
 			}()
 			result = p
 		}
@@ -40,7 +40,9 @@ func (s *service) getProviderByShortName(ctx context.Context, shortName string) 
 }
 
 // CreateProvider creates new provider.
-func (s *service) CreateProvider(ctx context.Context, shortName, longName string) (*domain.Provider, error) {
+func (s *service) CreateProvider(
+	ctx context.Context, shortName, longName string,
+) (*domain.Provider, error) {
 	conflicting, err := s.getProviderByShortName(ctx, shortName)
 	if err != nil && err != domain.ErrNotFound {
 		return nil, err
@@ -61,7 +63,8 @@ func (s *service) CreateProvider(ctx context.Context, shortName, longName string
 	}
 
 	go func() {
-		_ = s.cache.SetCache(ctx, p)
+		_ = s.cache.DeleteAllPagedCache(ctx)
+		_ = s.cache.SetCacheByUUID(ctx, p)
 	}()
 
 	return &p, nil
@@ -98,7 +101,7 @@ func (s *service) UpdateProvider(
 	}
 
 	go func() {
-		_ = s.cache.SetCache(ctx, *existing)
+		_ = s.cache.SetCacheByUUID(ctx, *existing)
 	}()
 
 	return existing, nil
@@ -116,7 +119,7 @@ func (s *service) GetProviderByUUID(ctx context.Context, uuid string) (*domain.P
 
 		if p != nil {
 			go func() {
-				_ = s.cache.SetCache(ctx, *p)
+				_ = s.cache.SetCacheByUUID(ctx, *p)
 			}()
 			result = p
 		}
@@ -139,8 +142,7 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 		limit = 1
 	}
 
-	cached, _ := s.cache.GetPagedCache(ctx, offset, limit)
-	if len(cached) == 0 {
+	if cached, _ := s.cache.GetPagedCache(ctx, offset, limit); cached == nil {
 		ps, err := s.repo.GetProviders(ctx, offset, limit)
 		if err != nil {
 			return nil, err
@@ -152,21 +154,6 @@ func (s *service) GetProviders(ctx context.Context, offset, limit int) ([]domain
 			}()
 			result = ps
 		}
-	} else if len(cached) < limit {
-		newLimit := limit - len(cached)
-		newOffset := offset + newLimit
-		ps, err := s.repo.GetProviders(ctx, newOffset, newLimit)
-		if err != nil {
-			return nil, err
-		}
-
-		ps = append(cached, ps...)
-
-		go func() {
-			_ = s.cache.SetPagedCache(ctx, offset, limit, ps)
-		}()
-
-		result = ps
 	} else {
 		result = cached
 	}

@@ -3,9 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
 	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
+)
+
+var (
+	singleCacheTTL = 12 * time.Hour
+	pagedCacheTTL  = 1 * time.Hour
 )
 
 type cache struct {
@@ -38,7 +44,7 @@ func (c *cache) GetCacheByUUID(ctx context.Context, uuid string) (*domain.Provid
 
 // SetCacheByUUID caches a provider using its UUID as the cache key.
 func (c *cache) SetCacheByUUID(ctx context.Context, p domain.Provider) error {
-	return c.rc.SetCache(ctx, c.prefixedKey(p.UUID), p, redis.DefaultCacheTTL)
+	return c.rc.SetCache(ctx, c.prefixedKey(p.UUID), p, singleCacheTTL)
 }
 
 // GetCacheByShortName gets a cached provider based on its short name.
@@ -61,7 +67,7 @@ func (c *cache) GetCacheByShortName(ctx context.Context, shortName string) (*dom
 
 // SetCacheByShortName caches a provider UUID using its short name as the cache key.
 func (c *cache) SetCacheByShortName(ctx context.Context, shortName, uuid string) error {
-	return c.rc.SetCache(ctx, c.prefixedKey(shortName), uuid, redis.DefaultCacheTTL)
+	return c.rc.SetCache(ctx, c.prefixedKey(shortName), uuid, singleCacheTTL)
 }
 
 // SetCache caches a provider.
@@ -101,11 +107,11 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 
 	for _, uuid := range uuids {
 		p, err := c.GetCacheByUUID(ctx, uuid)
-		if err != nil && err != redis.ErrNoCache {
+		if err != nil {
 			return nil, err
 		}
 		if p == nil {
-			continue
+			return nil, nil
 		}
 		ps = append(ps, *p)
 	}
@@ -117,21 +123,33 @@ func (c *cache) GetPagedCache(ctx context.Context, offset, limit int) ([]domain.
 func (c *cache) SetPagedCache(ctx context.Context, offset, limit int, ps []domain.Provider) error {
 	uuids := []string{}
 	for _, p := range ps {
-		if err := c.SetCache(ctx, p); err != nil {
+		if err := c.SetCacheByUUID(ctx, p); err != nil {
 			return err
 		}
 		uuids = append(uuids, p.UUID)
 	}
-	return c.rc.SetCache(ctx, c.pagedCacheKey(offset, limit), uuids, redis.DefaultCacheTTL)
+	return c.rc.SetCache(ctx, c.pagedCacheKey(offset, limit), uuids, pagedCacheTTL)
 }
 
-// DeleteCache removes a cached provider.
+// DeleteCache removes all paged caches.
+func (c *cache) DeleteAllPagedCache(ctx context.Context) error {
+	if err := c.rc.DeleteCacheByPrefix(ctx, c.prefixedKey("paged:*")); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteCache removes a cached provider & all paged caches.
 func (c *cache) DeleteCache(ctx context.Context, p domain.Provider) error {
 	if err := c.rc.DeleteCache(ctx, c.prefixedKey(p.UUID)); err != nil {
 		return err
 	}
 
 	if err := c.rc.DeleteCache(ctx, c.prefixedKey(p.ShortName)); err != nil {
+		return err
+	}
+
+	if err := c.DeleteAllPagedCache(ctx); err != nil {
 		return err
 	}
 

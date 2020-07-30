@@ -37,5 +37,6 @@ type ProviderCache interface {
 	SetCache(ctx context.Context, p Provider) error
 	GetPagedCache(ctx context.Context, offset, limit int) ([]Provider, error)
 	SetPagedCache(ctx context.Context, offset, limit int, ps []Provider) error
+	DeleteAllPagedCache(ctx context.Context) error
 	DeleteCache(ctx context.Context, p Provider) error
 }
