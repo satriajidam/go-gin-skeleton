@@ -2,6 +2,8 @@
 
 A skeleton project for building RESTful API with Go &amp; Gin using Clean Architecture.
 
+This project use [golang-standards/project-layout](https://github.com/golang-standards/project-layout) to structure its directories.
+
 ## Dependencies
 
 * Web Framework: [gin-gonic/gin](https://github.com/gin-gonic/gin)

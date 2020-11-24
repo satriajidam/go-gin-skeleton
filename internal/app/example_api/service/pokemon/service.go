@@ -3,8 +3,8 @@ package pokemon
 import (
 	"context"
 
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/pokeapi"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/client/pokeapi"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/domain"
 )
 
 type service struct {

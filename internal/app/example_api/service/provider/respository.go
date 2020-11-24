@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/domain"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
 )
 
 // ProviderSQLModel is a SQL database model for provider.

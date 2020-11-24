@@ -1,17 +1,17 @@
 package main
 
 import (
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/config"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/api"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/client/pokeapi"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/pokemon"
+	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/provider"
 	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
-	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/mysql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/api"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/pokeapi"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/pokemon"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/provider"
 )
 
 func main() {
@@ -101,6 +101,14 @@ func main() {
 			GroupedStatus: cfg.HTTPServerMonitorGroupedStatus,
 		},
 	)
+
+	if config.IsReleaseMode() {
+		server.SetGinReleaseMode()
+	}
+
+	if config.Get().GinDisallowUnknownJSONFields {
+		server.SetGinDisallowUnknownJSONFields()
+	}
 
 	server.RunServersGracefully(cfg.GracefulTimeout, promServer, httpServer)
 }

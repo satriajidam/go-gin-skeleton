@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
@@ -18,14 +17,14 @@ type Server interface {
 	Stop(ctx context.Context) error
 }
 
-func init() {
-	if config.IsReleaseMode() {
-		gin.SetMode(gin.ReleaseMode)
-	}
+// Set all gin HTTP servers to release mode.
+func SetGinReleaseMode() {
+	gin.SetMode(gin.ReleaseMode)
+}
 
-	if config.Get().GinDisallowUnknownJSONFields {
-		gin.EnableJsonDecoderDisallowUnknownFields()
-	}
+// Set all gin HTTP servers to prevent unknown JSON fields from getting parsed.
+func SetGinDisallowUnknownJSONFields() {
+	gin.EnableJsonDecoderDisallowUnknownFields()
 }
 
 // StartServers starts all given servers.
