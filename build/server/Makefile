@@ -2,7 +2,7 @@ include ../Makefile.mk
 
 REGISTRY_HOST=docker.io
 USERNAME=satriajidam
-NAME=server
+NAME=go-gin-skeleton-server
 
 DOCKER_BUILD_CONTEXT=../..
-DOCKER_FILE_PATH=$(DOCKER_BUILD_CONTEXT)/build/$(NAME)/Dockerfile
+DOCKER_FILE_PATH=$(DOCKER_BUILD_CONTEXT)/build/server/Dockerfile
