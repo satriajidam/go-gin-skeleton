@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -16,8 +15,8 @@ import (
 )
 
 type config struct {
-	ginMode                  string `envconfig:"GIN_MODE" default:"release"`
-	ginDisallowUnknownFields bool   `envconfig:"GIN_DISALLOW_UNKNOWN_FIELDS" default:"false"`
+	GinMode                  string `envconfig:"GIN_MODE" default:"release"`
+	GinDisallowUnknownFields bool   `envconfig:"GIN_DISALLOW_UNKNOWN_FIELDS" default:"false"`
 }
 
 const (
@@ -32,30 +31,24 @@ type Server interface {
 	Stop(ctx context.Context) error
 }
 
-var (
-	once sync.Once
-)
-
 func init() {
-	once.Do(func() {
-		serverConfig := &config{}
-		envconfig.MustProcess("", serverConfig)
+	serverConfig := &config{}
+	envconfig.MustProcess("", serverConfig)
 
-		switch strings.ToLower(serverConfig.ginMode) {
-		case ginDebugMode:
-			gin.SetMode(gin.DebugMode)
-		case ginReleaseMode:
-			gin.SetMode(gin.ReleaseMode)
-		case ginTestMode:
-			gin.SetMode(gin.TestMode)
-		default:
-			panic(fmt.Errorf("unsupported gin mode: %s", serverConfig.ginMode))
-		}
+	switch strings.ToLower(serverConfig.GinMode) {
+	case ginDebugMode:
+		gin.SetMode(gin.DebugMode)
+	case ginReleaseMode:
+		gin.SetMode(gin.ReleaseMode)
+	case ginTestMode:
+		gin.SetMode(gin.TestMode)
+	default:
+		panic(fmt.Errorf("unsupported gin mode: %s", serverConfig.GinMode))
+	}
 
-		if serverConfig.ginDisallowUnknownFields {
-			gin.EnableJsonDecoderDisallowUnknownFields()
-		}
-	})
+	if serverConfig.GinDisallowUnknownFields {
+		gin.EnableJsonDecoderDisallowUnknownFields()
+	}
 }
 
 // StartServers starts all given servers.

@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
@@ -14,8 +13,8 @@ import (
 )
 
 type config struct {
-	logLevel  string `envconfig:"LOG_LEVEL" default:"info"`
-	logAsJSON bool   `envconfig:"LOG_AS_JSON" default:"false"`
+	LogLevel  string `envconfig:"LOG_LEVEL" default:"info"`
+	LogAsJSON bool   `envconfig:"LOG_AS_JSON" default:"false"`
 }
 
 type logger struct {
@@ -24,7 +23,6 @@ type logger struct {
 }
 
 var (
-	once      sync.Once
 	singleton *logger
 )
 
@@ -47,51 +45,49 @@ const (
 )
 
 func init() {
-	once.Do(func() {
-		logConfig := &config{}
-		envconfig.MustProcess("", logConfig)
+	logConfig := &config{}
+	envconfig.MustProcess("", logConfig)
 
-		var logLevel zerolog.Level
+	var logLevel zerolog.Level
 
-		switch strings.ToUpper(logConfig.logLevel) {
-		case LevelDebug:
-			logLevel = zerolog.DebugLevel
-		case LevelInfo:
-			logLevel = zerolog.InfoLevel
-		case LevelWarn:
-			logLevel = zerolog.WarnLevel
-		case LevelError:
-			logLevel = zerolog.ErrorLevel
-		case LevelFatal:
-			logLevel = zerolog.FatalLevel
-		case LevelPanic:
-			logLevel = zerolog.PanicLevel
-		default:
-			panic(fmt.Errorf("unsupported log level: %s", logConfig.logLevel))
-		}
+	switch strings.ToUpper(logConfig.LogLevel) {
+	case LevelDebug:
+		logLevel = zerolog.DebugLevel
+	case LevelInfo:
+		logLevel = zerolog.InfoLevel
+	case LevelWarn:
+		logLevel = zerolog.WarnLevel
+	case LevelError:
+		logLevel = zerolog.ErrorLevel
+	case LevelFatal:
+		logLevel = zerolog.FatalLevel
+	case LevelPanic:
+		logLevel = zerolog.PanicLevel
+	default:
+		panic(fmt.Errorf("unsupported log level: %s", logConfig.LogLevel))
+	}
 
-		var stdErrWriter io.Writer
-		var stdOutWriter io.Writer
+	var stdErrWriter io.Writer
+	var stdOutWriter io.Writer
 
-		if logConfig.logAsJSON {
-			stdErrWriter = os.Stderr
-			stdOutWriter = os.Stdout
-		} else {
-			stdErrWriter = formatConsoleWriter(os.Stderr)
-			stdOutWriter = formatConsoleWriter(os.Stdout)
-		}
+	if logConfig.LogAsJSON {
+		stdErrWriter = os.Stderr
+		stdOutWriter = os.Stdout
+	} else {
+		stdErrWriter = formatConsoleWriter(os.Stderr)
+		stdOutWriter = formatConsoleWriter(os.Stdout)
+	}
 
-		singleton = &logger{
-			stderr: zerolog.New(stdErrWriter).
-				Level(logLevel).
-				With().
-				Logger(),
-			stdout: zerolog.New(stdOutWriter).
-				Level(logLevel).
-				With().
-				Logger(),
-		}
-	})
+	singleton = &logger{
+		stderr: zerolog.New(stdErrWriter).
+			Level(logLevel).
+			With().
+			Logger(),
+		stdout: zerolog.New(stdOutWriter).
+			Level(logLevel).
+			With().
+			Logger(),
+	}
 }
 
 func formatConsoleWriter(out *os.File) zerolog.ConsoleWriter {
