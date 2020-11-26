@@ -13,18 +13,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type logLevel string
-
-const (
-	debugLevel logLevel = "debug"
-	infoLevel  logLevel = "info"
-	warnLevel  logLevel = "warn"
-	errorLevel logLevel = "error"
-)
-
 type config struct {
-	logLevel  logLevel `envconfig:"LOG_LEVEL" default:"info"`
-	logAsJSON bool     `envconfig:"LOG_AS_JSON" default:"false"`
+	logLevel  string `envconfig:"LOG_LEVEL" default:"info"`
+	logAsJSON bool   `envconfig:"LOG_AS_JSON" default:"false"`
 }
 
 type logger struct {
@@ -41,6 +32,8 @@ const (
 	// LogFieldError for error log field.
 	LogFieldError = "error"
 
+	// LevelDebug for debug log level.
+	LevelDebug = "DEBUG"
 	// LevelInfo for info log level.
 	LevelInfo = "INFO"
 	// LevelWarn for warn log level.
@@ -51,8 +44,6 @@ const (
 	LevelFatal = "FATAL"
 	// LevelPanic for panic log level.
 	LevelPanic = "PANIC"
-	// LevelDebug for debug log level.
-	LevelDebug = "DEBUG"
 )
 
 func init() {
@@ -62,15 +53,19 @@ func init() {
 
 		var logLevel zerolog.Level
 
-		switch logConfig.logLevel {
-		case debugLevel:
+		switch strings.ToUpper(logConfig.logLevel) {
+		case LevelDebug:
 			logLevel = zerolog.DebugLevel
-		case infoLevel:
+		case LevelInfo:
 			logLevel = zerolog.InfoLevel
-		case warnLevel:
+		case LevelWarn:
 			logLevel = zerolog.WarnLevel
-		case errorLevel:
+		case LevelError:
 			logLevel = zerolog.ErrorLevel
+		case LevelFatal:
+			logLevel = zerolog.FatalLevel
+		case LevelPanic:
+			logLevel = zerolog.PanicLevel
 		default:
 			panic(fmt.Errorf("unsupported log level: %s", logConfig.logLevel))
 		}

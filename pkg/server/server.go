@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -14,18 +15,16 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
 
-type ginMode string
+type config struct {
+	ginMode                  string `envconfig:"GIN_MODE" default:"release"`
+	ginDisallowUnknownFields bool   `envconfig:"GIN_DISALLOW_UNKNOWN_FIELDS" default:"false"`
+}
 
 const (
-	debugMode   ginMode = "debug"
-	releaseMode ginMode = "release"
-	testMode    ginMode = "test"
+	ginDebugMode   = "debug"
+	ginReleaseMode = "release"
+	ginTestMode    = "test"
 )
-
-type config struct {
-	ginMode                  ginMode `envconfig:"GIN_MODE" default:"release"`
-	ginDisallowUnknownFields bool    `envconfig:"GIN_DISALLOW_UNKNOWN_FIELDS" default:"false"`
-}
 
 // Server is an interface for all type of servers.
 type Server interface {
@@ -42,12 +41,12 @@ func init() {
 		serverConfig := &config{}
 		envconfig.MustProcess("", serverConfig)
 
-		switch serverConfig.ginMode {
-		case debugMode:
+		switch strings.ToLower(serverConfig.ginMode) {
+		case ginDebugMode:
 			gin.SetMode(gin.DebugMode)
-		case releaseMode:
+		case ginReleaseMode:
 			gin.SetMode(gin.ReleaseMode)
-		case testMode:
+		case ginTestMode:
 			gin.SetMode(gin.TestMode)
 		default:
 			panic(fmt.Errorf("unsupported gin mode: %s", serverConfig.ginMode))
