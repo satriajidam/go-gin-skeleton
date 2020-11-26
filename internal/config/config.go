@@ -10,19 +10,10 @@ import (
 // Config stores application's configurations.
 type Config struct {
 	// The name of this application.
-	AppName string `envconfig:"APP_NAME" default:"gin"`
-
-	// Available levels are based on https://github.com/rs/zerolog#leveled-logging.
-	// zerolog allows for logging at the following levels (from highest to lowest):
-	// - release
-	// - debug
-	AppMode string `envconfig:"APP_MODE" default:"debug"`
+	AppName string `envconfig:"APP_NAME" default:"skeleton-server"`
 
 	// Graceful shutdown timeout in seconds.
 	GracefulTimeout time.Duration `envconfig:"GRACEFUL_TIMEOUT" default:"5s"`
-
-	// Gin engine specific configs.
-	GinDisallowUnknownJSONFields bool `envconfig:"GIN_DISALLOW_UNKNOWN_JSON_FIELDS" default:"false"`
 
 	// HTTP Server configurations.
 	HTTPServerPort                   string        `envconfig:"HTTP_SERVER_PORT" default:"80"`
@@ -106,11 +97,6 @@ var (
 	singleton *Config
 )
 
-const (
-	releaseMode = "release"
-	debugMode   = "debug"
-)
-
 // Get retrieves singleton object of application configurations.
 func Get() *Config {
 	once.Do(func() {
@@ -119,14 +105,4 @@ func Get() *Config {
 	})
 
 	return singleton
-}
-
-// IsReleaseMode checks if application is running in release mode.
-func IsReleaseMode() bool {
-	return Get().AppMode == releaseMode
-}
-
-// IsDebugMode checks if application is running in debug mode.
-func IsDebugMode() bool {
-	return Get().AppMode == debugMode
 }

@@ -2,15 +2,30 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
 	"github.com/logrusorgru/aurora"
 	"github.com/rs/zerolog"
-	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 )
+
+type logLevel string
+
+const (
+	debugLevel logLevel = "debug"
+	infoLevel  logLevel = "info"
+	warnLevel  logLevel = "warn"
+	errorLevel logLevel = "error"
+)
+
+type config struct {
+	logLevel  logLevel `envconfig:"LOG_LEVEL" default:"info"`
+	logAsJSON bool     `envconfig:"LOG_AS_JSON" default:"false"`
+}
 
 type logger struct {
 	stderr zerolog.Logger
@@ -42,18 +57,41 @@ const (
 
 func init() {
 	once.Do(func() {
-		logLevel := zerolog.DebugLevel
+		logConfig := &config{}
+		envconfig.MustProcess("", logConfig)
 
-		if config.IsReleaseMode() {
+		var logLevel zerolog.Level
+
+		switch logConfig.logLevel {
+		case debugLevel:
+			logLevel = zerolog.DebugLevel
+		case infoLevel:
 			logLevel = zerolog.InfoLevel
+		case warnLevel:
+			logLevel = zerolog.WarnLevel
+		case errorLevel:
+			logLevel = zerolog.ErrorLevel
+		default:
+			panic(fmt.Errorf("unsupported log level: %s", logConfig.logLevel))
+		}
+
+		var stdErrWriter io.Writer
+		var stdOutWriter io.Writer
+
+		if logConfig.logAsJSON {
+			stdErrWriter = os.Stderr
+			stdOutWriter = os.Stdout
+		} else {
+			stdErrWriter = formatConsoleWriter(os.Stderr)
+			stdOutWriter = formatConsoleWriter(os.Stdout)
 		}
 
 		singleton = &logger{
-			stderr: zerolog.New(formatConsoleWriter(os.Stderr)).
+			stderr: zerolog.New(stdErrWriter).
 				Level(logLevel).
 				With().
 				Logger(),
-			stdout: zerolog.New(formatConsoleWriter(os.Stdout)).
+			stdout: zerolog.New(stdOutWriter).
 				Level(logLevel).
 				With().
 				Logger(),

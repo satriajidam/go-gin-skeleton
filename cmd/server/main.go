@@ -1,17 +1,17 @@
 package main
 
 import (
+	"github.com/satriajidam/go-gin-skeleton/internal/config"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/api"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/client/pokeapi"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/pokemon"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/provider"
 	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
-	"github.com/satriajidam/go-gin-skeleton/pkg/config"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/database/sql/mysql"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/api"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/client/pokeapi"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/pokemon"
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/provider"
 )
 
 func main() {

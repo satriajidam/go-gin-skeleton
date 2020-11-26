@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	"github.com/satriajidam/go-gin-skeleton/pkg/service/domain"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/domain"
 	"github.com/segmentio/ksuid"
 )
 
