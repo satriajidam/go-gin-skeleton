@@ -1,5 +1,5 @@
-include Makefile.mk
+include ../Makefile.mk
 
 REGISTRY_HOST=docker.io
 USERNAME=satriajidam
-NAME=go-gin-skeleton
+NAME=server

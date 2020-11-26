@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/domain"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/domain"
 	"github.com/satriajidam/go-gin-skeleton/pkg/cache/redis"
 )
 

@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/satriajidam/go-gin-skeleton/internal/app/example_api/service/domain"
+	"github.com/satriajidam/go-gin-skeleton/internal/service/domain"
 )
 
 const (
