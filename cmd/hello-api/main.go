@@ -1,37 +1,24 @@
 package main
 
 import (
-	"github.com/satriajidam/go-gin-skeleton/internal/config"
+	"time"
+
 	"github.com/satriajidam/go-gin-skeleton/pkg/server"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/server/prometheus"
 )
 
 func main() {
-	cfg := config.Get()
-
-	httpServer := http.NewServer(
-		cfg.HTTPServerPort,
-		cfg.HTTPServerEnableCORS,
-		cfg.HTTPServerEnablePredefinedRoutes,
-	)
-	httpServer.CORS.AllowOrigins = cfg.HTTPServerAllowOrigins
-	httpServer.CORS.AllowMethods = cfg.HTTPServerAllowMethods
-	httpServer.CORS.AllowHeaders = cfg.HTTPServerAllowHeaders
-	httpServer.CORS.MaxAge = cfg.HTTPServerMaxAge
-
-	promServer := prometheus.NewServer(
-		cfg.PrometheusServerPort,
-		cfg.PrometheusServerMetricsPath,
-	)
+	httpServer := http.NewServer("80", true, true)
+	promServer := prometheus.NewServer("9180", "/metrics")
 
 	promServer.Monitor(
 		&prometheus.Target{
 			HTTPServer:    httpServer,
-			ExcludePaths:  cfg.HTTPServerMonitorSkipPaths,
-			GroupedStatus: cfg.HTTPServerMonitorGroupedStatus,
+			ExcludePaths:  []string{"/_/health"},
+			GroupedStatus: false,
 		},
 	)
 
-	server.RunServersGracefully(cfg.GracefulTimeout, promServer, httpServer)
+	server.RunServersGracefully(time.Second*5, promServer, httpServer)
 }
