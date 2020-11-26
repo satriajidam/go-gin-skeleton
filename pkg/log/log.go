@@ -23,8 +23,8 @@ const (
 )
 
 type config struct {
-	logAsJSON bool     `envconfig:"LOG_AS_JSON" default:"false"`
 	logLevel  logLevel `envconfig:"LOG_LEVEL" default:"info"`
+	logAsJSON bool     `envconfig:"LOG_AS_JSON" default:"false"`
 }
 
 type logger struct {

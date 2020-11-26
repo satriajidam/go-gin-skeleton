@@ -2,14 +2,30 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 )
+
+type ginMode string
+
+const (
+	debugMode   ginMode = "debug"
+	releaseMode ginMode = "release"
+	testMode    ginMode = "test"
+)
+
+type config struct {
+	ginMode                  ginMode `envconfig:"GIN_MODE" default:"release"`
+	ginDisallowUnknownFields bool    `envconfig:"GIN_DISALLOW_UNKNOWN_FIELDS" default:"false"`
+}
 
 // Server is an interface for all type of servers.
 type Server interface {
@@ -17,14 +33,30 @@ type Server interface {
 	Stop(ctx context.Context) error
 }
 
-// Set all gin HTTP servers to release mode.
-func SetGinReleaseMode() {
-	gin.SetMode(gin.ReleaseMode)
-}
+var (
+	once sync.Once
+)
 
-// Set all gin HTTP servers to prevent unknown JSON fields from getting parsed.
-func SetGinDisallowUnknownJSONFields() {
-	gin.EnableJsonDecoderDisallowUnknownFields()
+func init() {
+	once.Do(func() {
+		serverConfig := &config{}
+		envconfig.MustProcess("", serverConfig)
+
+		switch serverConfig.ginMode {
+		case debugMode:
+			gin.SetMode(gin.DebugMode)
+		case releaseMode:
+			gin.SetMode(gin.ReleaseMode)
+		case testMode:
+			gin.SetMode(gin.TestMode)
+		default:
+			panic(fmt.Errorf("unsupported gin mode: %s", serverConfig.ginMode))
+		}
+
+		if serverConfig.ginDisallowUnknownFields {
+			gin.EnableJsonDecoderDisallowUnknownFields()
+		}
+	})
 }
 
 // StartServers starts all given servers.
