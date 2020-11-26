@@ -7,7 +7,7 @@ COPY ./go.sum .
 # Copy all source and build it.
 # This layer will be rebuilt whenever a file has changed in the source directory.
 COPY ./ .
-RUN cd cmd/server \
+RUN cd cmd/rest-api \
   && GOOS=linux GOPROXY=https://proxy.golang.org go build -v -a -mod=readonly -o /bin/server .
 
 # Build final image.
