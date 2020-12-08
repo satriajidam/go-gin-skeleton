@@ -17,8 +17,8 @@ type ReqProperties struct {
 	Status string
 }
 
-// Recorder knows how to record and measure the metrics. This Interface has the required
-// methods to be used with the HTTP middlewares.
+// Recorder records and measures the metrics.
+// This interface has the required methods to be used with the HTTP middlewares.
 type Recorder interface {
 	// RecordHTTPRequestDuration measures the duration of an HTTP request.
 	RecordHTTPRequestDuration(ctx context.Context, props ReqProperties, duration time.Duration)
