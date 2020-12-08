@@ -12,20 +12,20 @@ import (
 type HTTPReqProperties struct {
 	// Service is the service that has served the request.
 	Service string
-	// ID is the id of the request handler.
-	ID string
+	// Endpoint is the endpoint of the request handler.
+	Endpoint string
 	// Method is the method of the request.
 	Method string
-	// Code is the response of the request.
-	Code string
+	// Status is the response code of the request.
+	Status string
 }
 
 // HTTPProperties are the metric properties for the global server metrics.
 type HTTPProperties struct {
 	// Service is the service that has served the request.
 	Service string
-	// ID is the id of the request handler.
-	ID string
+	// Endpoint is the endpoint of the request handler.
+	Endpoint string
 }
 
 // Recorder knows how to record and measure the metrics. This Interface has the required
