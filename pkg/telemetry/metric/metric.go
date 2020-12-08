@@ -7,14 +7,14 @@ import (
 
 // HTTPMetricProperty stores properties for the HTTP metrics based on incoming requests.
 type HTTPMetricProperty struct {
-	// Service is the service that has served the request.
-	Service string
+	// Host is the host that has served the request.
+	Host string
 	// Endpoint is the endpoint of the request handler.
 	Endpoint string
 	// Method is the method of the request.
 	Method string
 	// Status is the response code of the request.
-	Status string
+	Status int
 }
 
 // HTTPMetricRecorder records and measures the HTTP metrics.
@@ -26,8 +26,8 @@ type HTTPMetricRecorder interface {
 	RecordRequestSize(ctx context.Context, prop HTTPMetricProperty, sizeBytes int64)
 	// RecordResponseSize measures the size of an HTTP response in bytes.
 	RecordResponseSize(ctx context.Context, prop HTTPMetricProperty, sizeBytes int64)
-	// AddCompletedRequests increments the number of completed requests.
-	AddCompletedRequests(ctx context.Context, prop HTTPMetricProperty, quantity int)
+	// AddTotalRequests increments the total of completed requests.
+	AddTotalRequests(ctx context.Context, prop HTTPMetricProperty, quantity int64)
 	// AddInflightRequests increments and decrements the number of inflight requests.
-	AddInflightRequests(ctx context.Context, prop HTTPMetricProperty, quantity int)
+	AddInflightRequests(ctx context.Context, prop HTTPMetricProperty, quantity int64)
 }
