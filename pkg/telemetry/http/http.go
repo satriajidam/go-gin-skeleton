@@ -43,10 +43,10 @@ type Recorder interface {
 	AddInflightRequests(ctx context.Context, props HTTPProperties, quantity int)
 }
 
+type dummy int
+
 // Dummy is a dummy recorder.
 const Dummy = dummy(0)
-
-type dummy int
 
 func (dummy) RecordHTTPRequestDuration(_ context.Context, _ HTTPReqProperties, _ time.Duration) {}
 func (dummy) RecordHTTPRequestSize(_ context.Context, _ HTTPReqProperties, _ int64)             {}
