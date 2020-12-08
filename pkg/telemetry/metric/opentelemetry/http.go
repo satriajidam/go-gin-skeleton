@@ -17,8 +17,8 @@ import (
 type HTTPRecorderConfig struct {
 	// InstrumentationName must be the name of the library providing instrumentation.
 	// This name may be the same as the instrumented code only if that code provides
-	// built-in instrumentation. If the instrumentationName is empty, then an
-	// implementation defined default name will be used instead.
+	// built-in instrumentation. If the instrumentationName is empty, it will be set
+	// to `http`.
 	InstrumentationName string
 	// DurationBuckets are the buckets used for the HTTP request duration metrics,
 	// by default uses default buckets (from 5ms to 10s).
@@ -37,6 +37,10 @@ type HTTPRecorderConfig struct {
 }
 
 func (c *HTTPRecorderConfig) defaults() {
+	if c.InstrumentationName == "" {
+		c.InstrumentationName = "http"
+	}
+
 	if len(c.DurationBuckets) == 0 {
 		c.DurationBuckets = prom.DefBuckets
 	}
