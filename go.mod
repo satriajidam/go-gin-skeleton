@@ -18,7 +18,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.8.0
 	github.com/rs/zerolog v1.19.0
 	github.com/segmentio/ksuid v1.0.3
 	github.com/slok/go-http-metrics v0.8.0
