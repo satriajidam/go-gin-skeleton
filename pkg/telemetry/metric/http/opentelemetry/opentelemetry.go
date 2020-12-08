@@ -33,11 +33,11 @@ func (r recorder) RecordHTTPResponseSize(
 }
 
 func (r recorder) AddCompletedRequests(
-	ctx context.Context, props http.Properties, quantity int,
+	ctx context.Context, props http.ReqProperties, quantity int,
 ) {
 }
 
 func (r recorder) AddInflightRequests(
-	ctx context.Context, props http.Properties, quantity int,
+	ctx context.Context, props http.ReqProperties, quantity int,
 ) {
 }
