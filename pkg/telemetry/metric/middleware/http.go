@@ -1,11 +1,25 @@
-package http
+package middleware
 
-import "github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
+import (
+	"context"
+
+	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
+)
+
+// HTTPReporter knows how to report the data to the Middleware object so it can
+// measure the different framework/libraries.
+type HTTPReporter interface {
+	Method() string
+	Context() context.Context
+	URLPath() string
+	StatusCode() int
+	BytesWritten() int64
+}
 
 // HTTPMiddlewareConfig is the configuration for the HTTP middleware factory.
 type HTTPMiddlewareConfig struct {
 	// Recorder is the way the HTTP metrics will be recorded in the different backends.
-	Recorder metric.HTTPMetricRecorder
+	Recorder *metric.HTTPMetricRecorder
 	// Host is an optional identifier for the metrics host, this can be useful if
 	// the same app has multiple servers (e.g API, metrics and healthchecks).
 	Host string
@@ -24,4 +38,27 @@ type HTTPMiddlewareConfig struct {
 	// DisableMeasureInflight will disable the recording metrics about the inflight requests number,
 	// by default measuring inflights is enabled (`DisableMeasureInflight` is false).
 	DisableMeasureInflight bool
+}
+
+// HTTPMiddleware is an object that knows how to measure an HTTP handler by wrapping
+// another handler.
+//
+// Depending on the framework/library we want to measure, this can change a lot,
+// to abstract the way how we measure on the different libraries, Middleware will
+// recieve an `HTTPReporter` that knows how to get the data the Middleware object
+// needs to measure.
+type HTTPMiddleware struct {
+	cfg HTTPMiddlewareConfig
+}
+
+// NewHTTPMiddleware creates a new HTTP Middleware object.
+func NewHTTPMiddleware(cfg HTTPMiddlewareConfig) *HTTPMiddleware {
+	return &HTTPMiddleware{cfg: cfg}
+}
+
+// Measure abstracts the HTTP handler implementation by only requesting an HTTP reporter,
+// this reporter will return the required data to be measured.
+// It accepts a next function that will be called as the wrapped logic before and after
+// measurement actions.
+func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 }
