@@ -20,7 +20,7 @@ func NewPrometheusExporter(cfg otelprom.Config, opts ...pull.Option) (*otelprom.
 
 // DefaultPrometheusExporter creates a new global Prometheus OpenTelemetry exporter
 // using default Prometheus reporter config.
-func DefaultPrometheusExporter(options ...pull.Option) (*otelprom.Exporter, error) {
+func DefaultPrometheusExporter() (*otelprom.Exporter, error) {
 	return NewPrometheusExporter(otelprom.Config{
 		Registry:                   prom.NewRegistry(),
 		Registerer:                 prom.DefaultRegisterer,
