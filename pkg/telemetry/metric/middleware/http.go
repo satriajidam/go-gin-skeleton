@@ -48,12 +48,12 @@ type HTTPMiddlewareConfig struct {
 // recieve an `HTTPReporter` that knows how to get the data the Middleware object
 // needs to measure.
 type HTTPMiddleware struct {
-	cfg HTTPMiddlewareConfig
+	cfg *HTTPMiddlewareConfig
 }
 
 // NewHTTPMiddleware creates a new HTTP Middleware object.
-func NewHTTPMiddleware(cfg HTTPMiddlewareConfig) *HTTPMiddleware {
-	return &HTTPMiddleware{cfg: cfg}
+func NewHTTPMiddleware(cfg HTTPMiddlewareConfig) HTTPMiddleware {
+	return HTTPMiddleware{cfg: &cfg}
 }
 
 // Measure abstracts the HTTP handler implementation by only requesting an HTTP reporter,
