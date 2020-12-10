@@ -22,7 +22,7 @@ type HTTPReporter interface {
 type HTTPMiddlewareConfig struct {
 	// Recorder is the way the HTTP metrics will be recorded in the different backends.
 	// By default it will use OpenTelemetry.
-	Recorder *metric.HTTPMetricRecorder
+	Recorder *metric.HTTPRecorder
 	// Host is an optional identifier for the metrics host, this can be useful if
 	// the same app has multiple servers (e.g API, metrics and healthchecks).
 	// By default it will be set to the current hostname.

@@ -82,7 +82,7 @@ type httpRecorder struct {
 }
 
 // NewHTTPRecorder returns a new Recorder that uses OpenTelemetry as the backend.
-func NewHTTPRecorder(cfg HTTPRecorderConfig) metric.HTTPMetricRecorder {
+func NewHTTPRecorder(cfg HTTPRecorderConfig) metric.HTTPRecorder {
 	cfg.defaults()
 
 	r := &httpRecorder{}
@@ -136,7 +136,7 @@ func (r *httpRecorder) initMeasurements(cfg HTTPRecorderConfig) {
 	r.requestsInflight = &requestsInflight
 }
 
-func (r *httpRecorder) propertyToLabelPairs(prop metric.HTTPMetricProperty) []label.KeyValue {
+func (r *httpRecorder) propertyToLabelPairs(prop metric.HTTPProperty) []label.KeyValue {
 	return []label.KeyValue{
 		r.hostKey.String(prop.Host),
 		r.endpointKey.String(prop.Endpoint),
@@ -146,31 +146,31 @@ func (r *httpRecorder) propertyToLabelPairs(prop metric.HTTPMetricProperty) []la
 }
 
 func (r *httpRecorder) RecordRequestDuration(
-	ctx context.Context, prop metric.HTTPMetricProperty, duration time.Duration,
+	ctx context.Context, prop metric.HTTPProperty, duration time.Duration,
 ) {
 	r.requestDuration.Record(ctx, float64(duration.Milliseconds()), r.propertyToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) RecordRequestSize(
-	ctx context.Context, prop metric.HTTPMetricProperty, sizeBytes int64,
+	ctx context.Context, prop metric.HTTPProperty, sizeBytes int64,
 ) {
 	r.requestSize.Record(ctx, float64(sizeBytes), r.propertyToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) RecordResponseSize(
-	ctx context.Context, prop metric.HTTPMetricProperty, sizeBytes int64,
+	ctx context.Context, prop metric.HTTPProperty, sizeBytes int64,
 ) {
 	r.responseSize.Record(ctx, float64(sizeBytes), r.propertyToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) AddTotalRequests(
-	ctx context.Context, prop metric.HTTPMetricProperty, quantity int64,
+	ctx context.Context, prop metric.HTTPProperty, quantity int64,
 ) {
 	r.requestsTotal.Add(ctx, quantity, r.propertyToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) AddInflightRequests(
-	ctx context.Context, prop metric.HTTPMetricProperty, quantity int64,
+	ctx context.Context, prop metric.HTTPProperty, quantity int64,
 ) {
 	r.requestsInflight.Add(ctx, quantity, r.propertyToLabelPairs(prop)...)
 }
