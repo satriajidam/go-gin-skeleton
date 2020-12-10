@@ -14,9 +14,12 @@ func main() {
 
 	promServer.Monitor(
 		&prometheus.Target{
-			HTTPServer:    httpServer,
-			ExcludePaths:  []string{"/_/health"},
-			GroupedStatus: false,
+			HTTPServer:             httpServer,
+			ExcludePaths:           []string{""},
+			GroupedStatus:          false,
+			DisableMeasureReqSize:  false,
+			DisableMeasureRespSize: false,
+			DisableMeasureInflight: false,
 		},
 	)
 
