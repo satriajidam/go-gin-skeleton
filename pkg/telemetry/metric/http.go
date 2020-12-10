@@ -26,7 +26,8 @@ type HTTPInflightProperty struct {
 }
 
 // HTTPRecorder records and measures the HTTP metrics.
-// This interface has the required methods to be used with the HTTP middlewares.
+// This interface has the required methods to be implemented by the HTTP metrics backend
+// and used by the middleware.
 type HTTPRecorder interface {
 	// RecordRequestDuration measures the duration of an HTTP request.
 	RecordRequestDuration(ctx context.Context, prop HTTPRequestProperty, duration time.Duration)
