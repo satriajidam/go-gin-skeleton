@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/opentelemetry"
@@ -15,14 +18,15 @@ type HTTPReporter interface {
 	Context() context.Context
 	URLPath() string
 	StatusCode() int
-	BytesWritten() int64
+	RequestSize() int64
+	ResponseSize() int64
 }
 
-// HTTPMiddlewareConfig is the configuration for the HTTP middleware factory.
+// HTTPMiddlewareConfig stores configurations for the HTTP middleware factory.
 type HTTPMiddlewareConfig struct {
 	// Recorder is the way the HTTP metrics will be recorded in the different backends.
 	// By default it will use OpenTelemetry.
-	Recorder *metric.HTTPRecorder
+	Recorder metric.HTTPRecorder
 	// Host is an optional identifier for the metrics host, this can be useful if
 	// the same app has multiple servers (e.g API, metrics and healthchecks).
 	// By default it will be set to the current hostname.
@@ -46,8 +50,7 @@ type HTTPMiddlewareConfig struct {
 
 func (c *HTTPMiddlewareConfig) defaults() {
 	if c.Recorder == nil {
-		recorder := opentelemetry.NewHTTPRecorder(opentelemetry.HTTPRecorderConfig{})
-		c.Recorder = &recorder
+		c.Recorder = opentelemetry.NewHTTPRecorder(opentelemetry.HTTPRecorderConfig{})
 	}
 
 	if c.Host == "" {
@@ -80,5 +83,61 @@ func NewHTTPMiddleware(cfg HTTPMiddlewareConfig) HTTPMiddleware {
 // this reporter will return the required data to be measured.
 // It accepts a next function that will be called as the wrapped logic before and after
 // measurement actions.
-func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
+func (m *HTTPMiddleware) Measure(endpoint string, reporter HTTPReporter, next func()) {
+	ctx := reporter.Context()
+
+	// If there isn't predefined endpoint we
+	// set that endpoint as the URL path.
+	if endpoint == "" {
+		endpoint = reporter.URLPath()
+	}
+
+	// Measure inflights if required.
+	if !m.cfg.DisableMeasureInflight {
+		prop := metric.HTTPInflightProperty{
+			Host:     m.cfg.Host,
+			Endpoint: endpoint,
+		}
+		m.cfg.Recorder.AddInflightRequests(ctx, prop, 1)
+		defer m.cfg.Recorder.AddInflightRequests(ctx, prop, -1)
+	}
+
+	// Start the timer and when finishing measure the duration.
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+
+		// If we need to group the status code, it uses the
+		// first number of the status code because it is the
+		// least required identification way.
+		var status string
+		if m.cfg.GroupedStatus {
+			status = fmt.Sprintf("%dxx", reporter.StatusCode()/100)
+		} else {
+			status = strconv.Itoa(reporter.StatusCode())
+		}
+
+		prop := metric.HTTPRequestProperty{
+			Host:     m.cfg.Host,
+			Endpoint: endpoint,
+			Method:   reporter.Method(),
+			Status:   status,
+		}
+
+		m.cfg.Recorder.AddTotalRequests(ctx, prop, 1)
+		m.cfg.Recorder.RecordRequestDuration(ctx, prop, duration)
+
+		// Measure size of request if required.
+		if !m.cfg.DisableMeasureReqSize {
+			m.cfg.Recorder.RecordRequestSize(ctx, prop, reporter.RequestSize())
+		}
+
+		// Measure size of response if required.
+		if !m.cfg.DisableMeasureRespSize {
+			m.cfg.Recorder.RecordResponseSize(ctx, prop, reporter.ResponseSize())
+		}
+	}()
+
+	// Call the wrapped logic.
+	next()
 }

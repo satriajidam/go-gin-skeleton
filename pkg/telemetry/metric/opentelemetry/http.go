@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/unit"
 )
 
-// Config has the dependencies and values of the recorder.
+// HTTPRecorderConfig stores configurations for the HTTP metrics recorder.
 type HTTPRecorderConfig struct {
 	// InstrumentationName must be the name of the library providing instrumentation.
 	// This name may be the same as the instrumented code only if that code provides
@@ -136,41 +136,48 @@ func (r *httpRecorder) initMeasurements(cfg HTTPRecorderConfig) {
 	r.requestsInflight = &requestsInflight
 }
 
-func (r *httpRecorder) propertyToLabelPairs(prop metric.HTTPProperty) []label.KeyValue {
+func (r *httpRecorder) reqPropToLabelPairs(prop metric.HTTPRequestProperty) []label.KeyValue {
 	return []label.KeyValue{
 		r.hostKey.String(prop.Host),
 		r.endpointKey.String(prop.Endpoint),
 		r.methodKey.String(prop.Method),
-		r.statusKey.Int(prop.Status),
+		r.statusKey.String(prop.Status),
+	}
+}
+
+func (r *httpRecorder) infPropToLabelPairs(prop metric.HTTPInflightProperty) []label.KeyValue {
+	return []label.KeyValue{
+		r.hostKey.String(prop.Host),
+		r.endpointKey.String(prop.Endpoint),
 	}
 }
 
 func (r *httpRecorder) RecordRequestDuration(
-	ctx context.Context, prop metric.HTTPProperty, duration time.Duration,
+	ctx context.Context, prop metric.HTTPRequestProperty, duration time.Duration,
 ) {
-	r.requestDuration.Record(ctx, float64(duration.Milliseconds()), r.propertyToLabelPairs(prop)...)
+	r.requestDuration.Record(ctx, float64(duration.Milliseconds()), r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) RecordRequestSize(
-	ctx context.Context, prop metric.HTTPProperty, sizeBytes int64,
+	ctx context.Context, prop metric.HTTPRequestProperty, sizeBytes int64,
 ) {
-	r.requestSize.Record(ctx, float64(sizeBytes), r.propertyToLabelPairs(prop)...)
+	r.requestSize.Record(ctx, float64(sizeBytes), r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) RecordResponseSize(
-	ctx context.Context, prop metric.HTTPProperty, sizeBytes int64,
+	ctx context.Context, prop metric.HTTPRequestProperty, sizeBytes int64,
 ) {
-	r.responseSize.Record(ctx, float64(sizeBytes), r.propertyToLabelPairs(prop)...)
+	r.responseSize.Record(ctx, float64(sizeBytes), r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) AddTotalRequests(
-	ctx context.Context, prop metric.HTTPProperty, quantity int64,
+	ctx context.Context, prop metric.HTTPRequestProperty, quantity int64,
 ) {
-	r.requestsTotal.Add(ctx, quantity, r.propertyToLabelPairs(prop)...)
+	r.requestsTotal.Add(ctx, quantity, r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) AddInflightRequests(
-	ctx context.Context, prop metric.HTTPProperty, quantity int64,
+	ctx context.Context, prop metric.HTTPInflightProperty, quantity int64,
 ) {
-	r.requestsInflight.Add(ctx, quantity, r.propertyToLabelPairs(prop)...)
+	r.requestsInflight.Add(ctx, quantity, r.infPropToLabelPairs(prop)...)
 }
