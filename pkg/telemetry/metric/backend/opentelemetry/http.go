@@ -104,28 +104,28 @@ func (r *httpRecorder) initMeasurements(cfg HTTPRecorderConfig) {
 	meter := otel.Meter(cfg.InstrumentationName)
 
 	requestDuration := otelmetric.Must(meter).NewFloat64ValueRecorder(
-		"http_request_duration_milliseconds",
-		otelmetric.WithDescription("The latency of the HTTP request."),
+		metric.HTTPRequestDuration.Name,
+		otelmetric.WithDescription(metric.HTTPRequestDuration.Description),
 		otelmetric.WithUnit(unit.Milliseconds),
 	)
 	requestSize := otelmetric.Must(meter).NewFloat64ValueRecorder(
-		"http_request_size_bytes",
-		otelmetric.WithDescription("The size of the HTTP request."),
+		metric.HTTPRequestSize.Name,
+		otelmetric.WithDescription(metric.HTTPRequestSize.Description),
 		otelmetric.WithUnit(unit.Bytes),
 	)
 	responseSize := otelmetric.Must(meter).NewFloat64ValueRecorder(
-		"http_response_size_bytes",
-		otelmetric.WithDescription("The size of the HTTP response."),
+		metric.HTTPResponseSize.Name,
+		otelmetric.WithDescription(metric.HTTPResponseSize.Description),
 		otelmetric.WithUnit(unit.Bytes),
 	)
 	requestsTotal := otelmetric.Must(meter).NewInt64Counter(
-		"http_requests_total",
-		otelmetric.WithDescription("The total number of completed HTTP requests."),
+		metric.HTTPRequestsTotal.Name,
+		otelmetric.WithDescription(metric.HTTPRequestsTotal.Description),
 		otelmetric.WithUnit(unit.Dimensionless),
 	)
 	requestsInflight := otelmetric.Must(meter).NewInt64UpDownCounter(
-		"http_requests_inflight",
-		otelmetric.WithDescription("The number of inflight requests being processed at the same time."),
+		metric.HTTPRequestsInflight.Name,
+		otelmetric.WithDescription(metric.HTTPRequestsInflight.Description),
 		otelmetric.WithUnit(unit.Dimensionless),
 	)
 
