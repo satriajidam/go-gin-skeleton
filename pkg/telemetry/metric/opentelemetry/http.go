@@ -82,7 +82,7 @@ type httpRecorder struct {
 }
 
 // NewHTTPRecorder returns a new Recorder that uses OpenTelemetry as the backend.
-func NewHTTPRecorder(cfg HTTPRecorderConfig) (metric.HTTPMetricRecorder, error) {
+func NewHTTPRecorder(cfg HTTPRecorderConfig) metric.HTTPMetricRecorder {
 	cfg.defaults()
 
 	r := &httpRecorder{}
@@ -90,7 +90,7 @@ func NewHTTPRecorder(cfg HTTPRecorderConfig) (metric.HTTPMetricRecorder, error) 
 	r.initLabelKeys(cfg)
 	r.initMeasurements(cfg)
 
-	return r, nil
+	return r
 }
 
 func (r *httpRecorder) initLabelKeys(cfg HTTPRecorderConfig) {
