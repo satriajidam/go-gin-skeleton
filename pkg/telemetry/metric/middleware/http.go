@@ -13,10 +13,26 @@ import (
 
 // HTTPReporter knows how to report the data to the Middleware object so it can
 // measure the different framework/libraries.
+//
+// The most important thing to pay attention to when implementing this interface
+// is to make sure the `URLPath()` function groups all endpoints with path parameters
+// as a single URL path.
+// As an example, `/api/v1/providers/:name` endpoint has `:name` as a path parameter,
+// when multiple requests hit the endpoint using the following URL path:
+// - /api/v1/providers/aws
+// - /api/v1/providers/gcp
+// - /api/v1/providers/azure
+// then the reporter should only produce 1 metric with `/api/v1/providers/:name` as
+// its endpoint label and an aggregated value, instead of 3 metrics with 3 different
+// endpoint labels matching the requested URL path and 3 non-aggregated values. Failing
+// to do this will cause the produced metrics to have extremely high cardinality
+// which is against the recommended best practice.
+// Please refer to the following article to learn more about this topic:
+// https://banzaicloud.com/blog/monitoring-gin-with-prometheus/
 type HTTPReporter interface {
-	Method() string
 	Context() context.Context
 	URLPath() string
+	Method() string
 	StatusCode() int
 	RequestSize() int64
 	ResponseSize() int64
@@ -43,7 +59,7 @@ type HTTPMiddlewareConfig struct {
 	// DisableMeasureRespSize will disable the recording metrics about the response size,
 	// by default measuring response size is enabled (`DisableMeasureRespSize` is false).
 	DisableMeasureRespSize bool
-	// DisableMeasureInflight will disable the recording metrics about the inflight requests number,
+	// DisableMeasureInflight will disable the recording metrics about the inflight requests,
 	// by default measuring inflights is enabled (`DisableMeasureInflight` is false).
 	DisableMeasureInflight bool
 }
@@ -83,26 +99,18 @@ func NewHTTPMiddleware(cfg HTTPMiddlewareConfig) HTTPMiddleware {
 // this reporter will return the required data to be measured.
 // It accepts a next function that will be called as the wrapped logic before and after
 // measurement actions.
-func (m *HTTPMiddleware) Measure(endpoint string, reporter HTTPReporter, next func()) {
+func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 	ctx := reporter.Context()
 
-	// If there isn't predefined endpoint we
-	// set that endpoint as the URL path.
-	if endpoint == "" {
-		endpoint = reporter.URLPath()
-	}
-
-	// Measure inflights if required.
 	if !m.cfg.DisableMeasureInflight {
 		prop := metric.HTTPInflightProperty{
 			Host:     m.cfg.Host,
-			Endpoint: endpoint,
+			Endpoint: reporter.URLPath(),
 		}
 		m.cfg.Recorder.AddInflightRequests(ctx, prop, 1)
 		defer m.cfg.Recorder.AddInflightRequests(ctx, prop, -1)
 	}
 
-	// Start the timer and when finishing measure the duration.
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start)
@@ -119,7 +127,7 @@ func (m *HTTPMiddleware) Measure(endpoint string, reporter HTTPReporter, next fu
 
 		prop := metric.HTTPRequestProperty{
 			Host:     m.cfg.Host,
-			Endpoint: endpoint,
+			Endpoint: reporter.URLPath(),
 			Method:   reporter.Method(),
 			Status:   status,
 		}
@@ -127,12 +135,10 @@ func (m *HTTPMiddleware) Measure(endpoint string, reporter HTTPReporter, next fu
 		m.cfg.Recorder.AddTotalRequests(ctx, prop, 1)
 		m.cfg.Recorder.RecordRequestDuration(ctx, prop, duration)
 
-		// Measure size of request if required.
 		if !m.cfg.DisableMeasureReqSize {
 			m.cfg.Recorder.RecordRequestSize(ctx, prop, reporter.RequestSize())
 		}
 
-		// Measure size of response if required.
 		if !m.cfg.DisableMeasureRespSize {
 			m.cfg.Recorder.RecordResponseSize(ctx, prop, reporter.ResponseSize())
 		}
