@@ -40,3 +40,48 @@ type HTTPRecorder interface {
 	// AddInflightRequests increments and decrements the number of inflight requests.
 	AddInflightRequests(ctx context.Context, prop HTTPInflightProperty, quantity int64)
 }
+
+// HTTPRecorderConfig stores configurations for the HTTP metrics recorder.
+type HTTPRecorderConfig struct {
+	// DurationBuckets are the buckets used for the HTTP request duration metrics,
+	// by default uses default buckets (from 5ms to 10s).
+	DurationBuckets []float64
+	// SizeBuckets are the buckets for the HTTP request/response size metrics,
+	// by default uses a exponential buckets from 100B to 1GB.
+	SizeBuckets []float64
+	// HostLabel is the name that will be set to the host label, by default is `host`.
+	HostLabel string
+	// EndpointLabel is the name that will be set to the endpoint label, by default is `endpoint`.
+	EndpointLabel string
+	// MethodLabel is the name that will be set to the method label, by default is `method`.
+	MethodLabel string
+	// StatusLabel is the name that will be set to the response code label, by default is `status`.
+	StatusLabel string
+}
+
+// Defaults sets default values for HTTP metrics recorder configurations.
+func (c *HTTPRecorderConfig) Defaults() {
+	if len(c.DurationBuckets) == 0 {
+		c.DurationBuckets = durationBuckets
+	}
+
+	if len(c.SizeBuckets) == 0 {
+		c.SizeBuckets = sizeBuckets
+	}
+
+	if c.HostLabel == "" {
+		c.HostLabel = "host"
+	}
+
+	if c.EndpointLabel == "" {
+		c.EndpointLabel = "endpoint"
+	}
+
+	if c.MethodLabel == "" {
+		c.MethodLabel = "method"
+	}
+
+	if c.StatusLabel == "" {
+		c.StatusLabel = "status"
+	}
+}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	httpserver "github.com/satriajidam/go-gin-skeleton/pkg/server/http"
+	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/backend/opentelemetry"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware"
 	ginmiddleware "github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware/gin"
@@ -105,7 +106,7 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *Server) Monitor(targets ...*Target) {
 	for _, t := range targets {
 		mdlw := middleware.NewHTTPMiddleware(middleware.HTTPMiddlewareConfig{
-			Recorder:               opentelemetry.NewHTTPRecorder(opentelemetry.HTTPRecorderConfig{}),
+			Recorder:               opentelemetry.NewHTTPRecorder(metric.HTTPRecorderConfig{}),
 			Host:                   fmt.Sprintf("%s:%s", util.GetHostname(), t.HTTPServer.Port),
 			GroupedStatus:          t.GroupedStatus,
 			DisableMeasureReqSize:  t.DisableMeasureReqSize,

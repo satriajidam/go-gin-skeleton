@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
 
 	"go.opentelemetry.io/otel"
@@ -12,59 +11,6 @@ import (
 	otelmetric "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/unit"
 )
-
-// HTTPRecorderConfig stores configurations for the HTTP metrics recorder.
-type HTTPRecorderConfig struct {
-	// InstrumentationName must be the name of the library providing instrumentation.
-	// This name may be the same as the instrumented code only if that code provides
-	// built-in instrumentation. If the instrumentationName is empty, it will be set
-	// to `http`.
-	InstrumentationName string
-	// DurationBuckets are the buckets used for the HTTP request duration metrics,
-	// by default uses default buckets (from 5ms to 10s).
-	DurationBuckets []float64
-	// SizeBuckets are the buckets for the HTTP request/response size metrics,
-	// by default uses a exponential buckets from 100B to 1GB.
-	SizeBuckets []float64
-	// HostLabel is the name that will be set to the host label, by default is `host`.
-	HostLabel string
-	// EndpointLabel is the name that will be set to the endpoint label, by default is `endpoint`.
-	EndpointLabel string
-	// MethodLabel is the name that will be set to the method label, by default is `method`.
-	MethodLabel string
-	// StatusLabel is the name that will be set to the response code label, by default is `status`.
-	StatusLabel string
-}
-
-func (c *HTTPRecorderConfig) defaults() {
-	if c.InstrumentationName == "" {
-		c.InstrumentationName = "http"
-	}
-
-	if len(c.DurationBuckets) == 0 {
-		c.DurationBuckets = prom.DefBuckets
-	}
-
-	if len(c.SizeBuckets) == 0 {
-		c.SizeBuckets = prom.ExponentialBuckets(100, 10, 8)
-	}
-
-	if c.HostLabel == "" {
-		c.HostLabel = "host"
-	}
-
-	if c.EndpointLabel == "" {
-		c.EndpointLabel = "endpoint"
-	}
-
-	if c.MethodLabel == "" {
-		c.MethodLabel = "method"
-	}
-
-	if c.StatusLabel == "" {
-		c.StatusLabel = "status"
-	}
-}
 
 type httpRecorder struct {
 	// Label keys.
@@ -82,8 +28,8 @@ type httpRecorder struct {
 }
 
 // NewHTTPRecorder returns a new Recorder that uses OpenTelemetry as the backend.
-func NewHTTPRecorder(cfg HTTPRecorderConfig) metric.HTTPRecorder {
-	cfg.defaults()
+func NewHTTPRecorder(cfg metric.HTTPRecorderConfig) metric.HTTPRecorder {
+	cfg.Defaults()
 
 	r := &httpRecorder{}
 
@@ -93,39 +39,39 @@ func NewHTTPRecorder(cfg HTTPRecorderConfig) metric.HTTPRecorder {
 	return r
 }
 
-func (r *httpRecorder) initLabelKeys(cfg HTTPRecorderConfig) {
+func (r *httpRecorder) initLabelKeys(cfg metric.HTTPRecorderConfig) {
 	r.hostKey = label.Key(cfg.HostLabel)
 	r.endpointKey = label.Key(cfg.EndpointLabel)
 	r.methodKey = label.Key(cfg.MethodLabel)
 	r.statusKey = label.Key(cfg.StatusLabel)
 }
 
-func (r *httpRecorder) initMeasurements(cfg HTTPRecorderConfig) {
-	meter := otel.Meter(cfg.InstrumentationName)
+func (r *httpRecorder) initMeasurements(cfg metric.HTTPRecorderConfig) {
+	meter := otel.Meter("http")
 
 	requestDuration := otelmetric.Must(meter).NewFloat64ValueRecorder(
-		metric.HTTPRequestDuration.Name,
-		otelmetric.WithDescription(metric.HTTPRequestDuration.Description),
+		metric.HTTPRequestDuration().Name,
+		otelmetric.WithDescription(metric.HTTPRequestDuration().Description),
 		otelmetric.WithUnit(unit.Milliseconds),
 	)
 	requestSize := otelmetric.Must(meter).NewFloat64ValueRecorder(
-		metric.HTTPRequestSize.Name,
-		otelmetric.WithDescription(metric.HTTPRequestSize.Description),
+		metric.HTTPRequestSize().Name,
+		otelmetric.WithDescription(metric.HTTPRequestSize().Description),
 		otelmetric.WithUnit(unit.Bytes),
 	)
 	responseSize := otelmetric.Must(meter).NewFloat64ValueRecorder(
-		metric.HTTPResponseSize.Name,
-		otelmetric.WithDescription(metric.HTTPResponseSize.Description),
+		metric.HTTPResponseSize().Name,
+		otelmetric.WithDescription(metric.HTTPResponseSize().Description),
 		otelmetric.WithUnit(unit.Bytes),
 	)
 	requestsTotal := otelmetric.Must(meter).NewInt64Counter(
-		metric.HTTPRequestsTotal.Name,
-		otelmetric.WithDescription(metric.HTTPRequestsTotal.Description),
+		metric.HTTPRequestsTotal().Name,
+		otelmetric.WithDescription(metric.HTTPRequestsTotal().Description),
 		otelmetric.WithUnit(unit.Dimensionless),
 	)
 	requestsInflight := otelmetric.Must(meter).NewInt64UpDownCounter(
-		metric.HTTPRequestsInflight.Name,
-		otelmetric.WithDescription(metric.HTTPRequestsInflight.Description),
+		metric.HTTPRequestsInflight().Name,
+		otelmetric.WithDescription(metric.HTTPRequestsInflight().Description),
 		otelmetric.WithUnit(unit.Dimensionless),
 	)
 
