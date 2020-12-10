@@ -3,6 +3,7 @@ module github.com/satriajidam/go-gin-skeleton
 go 1.14
 
 require (
+	contrib.go.opencensus.io/exporter/prometheus v0.2.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.6.3
@@ -24,6 +25,7 @@ require (
 	github.com/slok/go-http-metrics v0.8.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.0.0-beta.1 // indirect
+	go.opencensus.io v0.22.5 // indirect
 	go.opentelemetry.io/otel v0.14.0
 	go.opentelemetry.io/otel/exporters/metric/prometheus v0.14.0
 	go.opentelemetry.io/otel/sdk v0.14.0
