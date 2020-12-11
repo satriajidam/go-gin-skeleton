@@ -21,8 +21,7 @@ type HTTPInflightProperty struct {
 }
 
 // HTTPRecorder records and measures the HTTP metrics.
-// This interface has the required methods to be implemented by the HTTP metrics backend
-// and used by the middleware.
+// This interface has the required methods to be implemented by the HTTP metrics backend.
 type HTTPRecorder interface {
 	// RecordRequestDuration measures the duration of an HTTP request.
 	RecordRequestDuration(ctx context.Context, prop HTTPRequestProperty, duration time.Duration)
@@ -38,20 +37,12 @@ type HTTPRecorder interface {
 
 // HTTPRecorderConfig stores configurations for the HTTP metrics recorder.
 type HTTPRecorderConfig struct {
-	// DurationBuckets are the buckets used for the HTTP request duration metrics,
-	// by default uses default buckets (from 5ms to 10s).
 	DurationBuckets []float64
-	// SizeBuckets are the buckets for the HTTP request/response size metrics,
-	// by default uses a exponential buckets from 100B to 1GB.
-	SizeBuckets []float64
-	// HostLabel is the name that will be set to the host label, by default is `host`.
-	HostLabel string
-	// EndpointLabel is the name that will be set to the endpoint label, by default is `endpoint`.
-	EndpointLabel string
-	// MethodLabel is the name that will be set to the method label, by default is `method`.
-	MethodLabel string
-	// StatusLabel is the name that will be set to the response code label, by default is `status`.
-	StatusLabel string
+	SizeBuckets     []float64
+	HostLabel       string
+	EndpointLabel   string
+	MethodLabel     string
+	StatusLabel     string
 }
 
 // Defaults sets default values for HTTP metrics recorder configurations.

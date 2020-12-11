@@ -16,7 +16,7 @@ func NewPrometheusExporter(opts ocenprom.Options) (*ocenprom.Exporter, error) {
 }
 
 // DefaultPrometheusExporter creates a new global OpenCensus Prometheus exporter
-// using default Prometheus reporter config.
+// using default Prometheus exporter options.
 func DefaultPrometheusExporter() (*ocenprom.Exporter, error) {
 	return NewPrometheusExporter(ocenprom.Options{})
 }

@@ -10,8 +10,8 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/backend/opencensus"
 )
 
-// HTTPReporter knows how to report the data to the Middleware object so it can
-// measure the different framework/libraries.
+// HTTPReporter abstracts the ways to report the required data for measuring HTTP metrics
+// to the middleware object.
 //
 // The most important thing to pay attention to when implementing this interface
 // is to make sure the `URLPath()` function groups all endpoints with path parameters
