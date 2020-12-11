@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -70,11 +69,7 @@ func (c *HTTPMiddlewareConfig) defaults() {
 	}
 
 	if c.Host == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			hostname = "localhost"
-		}
-		c.Host = hostname
+		c.Host = "localhost"
 	}
 }
 
