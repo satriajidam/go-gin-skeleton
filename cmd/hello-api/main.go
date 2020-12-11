@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	httpServer := http.NewServer("80", true, true)
+	httpServer := http.NewServer("8080", true, true)
 	promServer := prometheus.NewServer("9180", "/metrics")
 
 	promServer.Monitor(

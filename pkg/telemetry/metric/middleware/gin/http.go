@@ -24,6 +24,10 @@ func (r *httpReporter) Context() context.Context {
 	return r.c.Request.Context()
 }
 
+func (r *httpReporter) URLHost() string {
+	return r.c.Request.Host
+}
+
 func (r *httpReporter) URLPath() string {
 	return r.c.FullPath()
 }

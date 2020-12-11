@@ -30,6 +30,7 @@ import (
 // https://banzaicloud.com/blog/monitoring-gin-with-prometheus/
 type HTTPReporter interface {
 	Context() context.Context
+	URLHost() string
 	URLPath() string
 	Method() string
 	StatusCode() int
@@ -42,10 +43,6 @@ type HTTPMiddlewareConfig struct {
 	// Recorder is the way the HTTP metrics will be recorded in the different backends.
 	// By default it will use OpenTelemetry.
 	Recorder metric.HTTPRecorder
-	// Host is an optional identifier for the metrics host, this can be useful if
-	// the same app has multiple servers (e.g API, metrics and healthchecks).
-	// By default it will be set to the current hostname.
-	Host string
 	// GroupedStatus will group the status label in the form of `\dxx`, for example,
 	// 200, 201, and 203 will have the label `status="2xx"`. This impacts on the cardinality
 	// of the metrics and also improves the performance of queries that are grouped by
@@ -66,10 +63,6 @@ type HTTPMiddlewareConfig struct {
 func (c *HTTPMiddlewareConfig) defaults() {
 	if c.Recorder == nil {
 		c.Recorder = opencensus.NewHTTPRecorder(metric.HTTPRecorderConfig{})
-	}
-
-	if c.Host == "" {
-		c.Host = "localhost"
 	}
 }
 
@@ -99,7 +92,7 @@ func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 
 	if !m.cfg.DisableMeasureInflight {
 		prop := metric.HTTPInflightProperty{
-			Host:     m.cfg.Host,
+			Host:     reporter.URLHost(),
 			Endpoint: reporter.URLPath(),
 		}
 		m.cfg.Recorder.AddInflightRequests(ctx, prop, 1)
@@ -118,7 +111,7 @@ func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 		}
 
 		prop := metric.HTTPRequestProperty{
-			Host:     m.cfg.Host,
+			Host:     reporter.URLHost(),
 			Endpoint: reporter.URLPath(),
 			Method:   reporter.Method(),
 			Status:   status,

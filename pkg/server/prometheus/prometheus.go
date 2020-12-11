@@ -11,7 +11,6 @@ import (
 	metricbackend "github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/backend/opencensus"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware"
 	ginmiddleware "github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware/gin"
-	"github.com/satriajidam/go-gin-skeleton/pkg/util"
 )
 
 // Server represents the implementation of Prometheus server object.
@@ -106,8 +105,8 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *Server) Monitor(targets ...*Target) {
 	for _, t := range targets {
 		mdlw := middleware.NewHTTPMiddleware(middleware.HTTPMiddlewareConfig{
-			Recorder:               metricbackend.NewHTTPRecorder(metric.HTTPRecorderConfig{}),
-			Host:                   fmt.Sprintf("%s:%s", util.GetHostname(), t.HTTPServer.Port),
+			Recorder: metricbackend.NewHTTPRecorder(metric.HTTPRecorderConfig{}),
+			// Host:                   fmt.Sprintf("%s:%s", util.GetHostname(), t.HTTPServer.Port),
 			GroupedStatus:          t.GroupedStatus,
 			DisableMeasureReqSize:  t.DisableMeasureReqSize,
 			DisableMeasureRespSize: t.DisableMeasureRespSize,
