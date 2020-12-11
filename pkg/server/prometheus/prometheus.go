@@ -8,7 +8,7 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/log"
 	httpserver "github.com/satriajidam/go-gin-skeleton/pkg/server/http"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
-	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/backend/opentelemetry"
+	metricbackend "github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/backend/opencensus"
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware"
 	ginmiddleware "github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware/gin"
 	"github.com/satriajidam/go-gin-skeleton/pkg/util"
@@ -75,7 +75,7 @@ func (s *Server) Start() error {
 	log.Info(fmt.Sprintf("Start Prometheus server on port %s", s.Port))
 
 	mux := http.NewServeMux()
-	handler, err := opentelemetry.DefaultPrometheusExporter()
+	handler, err := metricbackend.DefaultPrometheusExporter()
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *Server) Monitor(targets ...*Target) {
 	for _, t := range targets {
 		mdlw := middleware.NewHTTPMiddleware(middleware.HTTPMiddlewareConfig{
-			Recorder:               opentelemetry.NewHTTPRecorder(metric.HTTPRecorderConfig{}),
+			Recorder:               metricbackend.NewHTTPRecorder(metric.HTTPRecorderConfig{}),
 			Host:                   fmt.Sprintf("%s:%s", util.GetHostname(), t.HTTPServer.Port),
 			GroupedStatus:          t.GroupedStatus,
 			DisableMeasureReqSize:  t.DisableMeasureReqSize,
