@@ -46,7 +46,7 @@ type HTTPMiddlewareConfig struct {
 	// GroupedStatus will group the status label in the form of `\dxx`, for example,
 	// 200, 201, and 203 will have the label `status="2xx"`. This impacts on the cardinality
 	// of the metrics and also improves the performance of queries that are grouped by
-	// status code because there are already aggregated in the metric.
+	// status code because they are already aggregated in the metric.
 	// By default it will be set to false.
 	GroupedStatus bool
 	// DisableMeasureReqSize will disable the recording metrics about the request size,
@@ -68,11 +68,6 @@ func (c *HTTPMiddlewareConfig) defaults() {
 
 // HTTPMiddleware is an object that knows how to measure an HTTP handler by wrapping
 // another handler.
-//
-// Depending on the framework/library we want to measure, this can change a lot,
-// to abstract the way how we measure on the different libraries, Middleware will
-// receive an `HTTPReporter` that knows how to get the required metrics data for the
-// Middleware object.
 type HTTPMiddleware struct {
 	cfg *HTTPMiddlewareConfig
 }

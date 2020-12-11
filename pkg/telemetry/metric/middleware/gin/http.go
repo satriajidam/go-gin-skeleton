@@ -8,7 +8,7 @@ import (
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/middleware"
 )
 
-// HTTPHandler returns a Gin HTTP metrics measuring middleware.
+// HTTPHandler returns a gin handler for reporting HTTP metrics.
 func HTTPHandler(m middleware.HTTPMiddleware) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		r := &httpReporter{c: c}
