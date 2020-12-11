@@ -1,3 +1,8 @@
+// IMPORTANT:
+// This package is still a work in progress. It isn't recommended for production usage.
+// Currently, the OpenTelemetry dev team is still in the middle of migrating opencensus-go
+// APIs to opentelemetry-go library. So for production usage please use the OpenCensus
+// backend instead.
 package opentelemetry
 
 import (
@@ -35,6 +40,10 @@ func NewHTTPRecorder(cfg metric.HTTPRecorderConfig) metric.HTTPRecorder {
 
 	r.initLabelKeys(cfg)
 	r.initMeasurements(cfg)
+
+	// TODO: Use OpenCensus View APIs (WIP) to configure metric outputs.
+	// Please refer to the following article to learn more about this topic:
+	// https://github.com/open-telemetry/opentelemetry-go/issues/689
 
 	return r
 }

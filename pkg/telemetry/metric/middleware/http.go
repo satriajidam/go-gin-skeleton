@@ -82,8 +82,8 @@ func (c *HTTPMiddlewareConfig) defaults() {
 //
 // Depending on the framework/library we want to measure, this can change a lot,
 // to abstract the way how we measure on the different libraries, Middleware will
-// recieve an `HTTPReporter` that knows how to get the data the Middleware object
-// needs to measure.
+// receive an `HTTPReporter` that knows how to get the required metrics data for the
+// Middleware object.
 type HTTPMiddleware struct {
 	cfg *HTTPMiddlewareConfig
 }
@@ -114,9 +114,6 @@ func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 	defer func() {
 		duration := time.Since(start)
 
-		// If we need to group the status code, it uses the
-		// first number of the status code because it is the
-		// least required identification way.
 		var status string
 		if m.cfg.GroupedStatus {
 			status = fmt.Sprintf("%dxx", reporter.StatusCode()/100)
@@ -143,6 +140,5 @@ func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 		}
 	}()
 
-	// Call the wrapped logic.
 	next()
 }
