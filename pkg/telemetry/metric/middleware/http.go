@@ -94,6 +94,7 @@ func (m *HTTPMiddleware) Measure(reporter HTTPReporter, next func()) {
 		prop := metric.HTTPInflightProperty{
 			Host:     reporter.URLHost(),
 			Endpoint: reporter.URLPath(),
+			Method:   reporter.Method(),
 		}
 		m.cfg.Recorder.AddInflightRequests(ctx, prop, 1)
 		defer m.cfg.Recorder.AddInflightRequests(ctx, prop, -1)
