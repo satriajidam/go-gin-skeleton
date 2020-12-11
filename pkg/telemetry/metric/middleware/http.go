@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric"
+	"github.com/satriajidam/go-gin-skeleton/pkg/telemetry/metric/backend/opencensus"
 )
 
 // HTTPReporter knows how to report the data to the Middleware object so it can
@@ -64,9 +65,9 @@ type HTTPMiddlewareConfig struct {
 }
 
 func (c *HTTPMiddlewareConfig) defaults() {
-	// if c.Recorder == nil {
-	// 	c.Recorder = opentelemetry.NewHTTPRecorder("", metric.HTTPRecorderConfig{})
-	// }
+	if c.Recorder == nil {
+		c.Recorder = opencensus.NewHTTPRecorder(metric.HTTPRecorderConfig{})
+	}
 
 	if c.Host == "" {
 		hostname, err := os.Hostname()

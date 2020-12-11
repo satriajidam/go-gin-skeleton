@@ -26,20 +26,20 @@ type httpRecorder struct {
 
 	// Measurements.
 	requestDuration  *otelmetric.Float64ValueRecorder
-	requestSize      *otelmetric.Float64ValueRecorder
-	responseSize     *otelmetric.Float64ValueRecorder
+	requestSize      *otelmetric.Int64ValueRecorder
+	responseSize     *otelmetric.Int64ValueRecorder
 	requestsTotal    *otelmetric.Int64Counter
 	requestsInflight *otelmetric.Int64UpDownCounter
 }
 
-// NewHTTPRecorder returns a new Recorder that uses OpenTelemetry as the backend.
+// NewHTTPRecorder returns a new HTTP Recorder with OpenTelemetry backend.
 func NewHTTPRecorder(cfg metric.HTTPRecorderConfig) metric.HTTPRecorder {
 	cfg.Defaults()
 
 	r := &httpRecorder{}
 
 	r.initLabelKeys(cfg)
-	r.initMeasurements(cfg)
+	r.initMeasurements()
 
 	// TODO: Use OpenCensus View APIs (WIP) to configure metric outputs.
 	// Please refer to the following article to learn more about this topic:
@@ -55,20 +55,20 @@ func (r *httpRecorder) initLabelKeys(cfg metric.HTTPRecorderConfig) {
 	r.statusKey = label.Key(cfg.StatusLabel)
 }
 
-func (r *httpRecorder) initMeasurements(cfg metric.HTTPRecorderConfig) {
+func (r *httpRecorder) initMeasurements() {
 	meter := otel.Meter("http")
 
 	requestDuration := otelmetric.Must(meter).NewFloat64ValueRecorder(
 		metric.HTTPRequestDuration().Name,
 		otelmetric.WithDescription(metric.HTTPRequestDuration().Description),
-		otelmetric.WithUnit(unit.Milliseconds),
+		otelmetric.WithUnit(unit.Unit("s")),
 	)
-	requestSize := otelmetric.Must(meter).NewFloat64ValueRecorder(
+	requestSize := otelmetric.Must(meter).NewInt64ValueRecorder(
 		metric.HTTPRequestSize().Name,
 		otelmetric.WithDescription(metric.HTTPRequestSize().Description),
 		otelmetric.WithUnit(unit.Bytes),
 	)
-	responseSize := otelmetric.Must(meter).NewFloat64ValueRecorder(
+	responseSize := otelmetric.Must(meter).NewInt64ValueRecorder(
 		metric.HTTPResponseSize().Name,
 		otelmetric.WithDescription(metric.HTTPResponseSize().Description),
 		otelmetric.WithUnit(unit.Bytes),
@@ -110,19 +110,19 @@ func (r *httpRecorder) infPropToLabelPairs(prop metric.HTTPInflightProperty) []l
 func (r *httpRecorder) RecordRequestDuration(
 	ctx context.Context, prop metric.HTTPRequestProperty, duration time.Duration,
 ) {
-	r.requestDuration.Record(ctx, float64(duration.Milliseconds()), r.reqPropToLabelPairs(prop)...)
+	r.requestDuration.Record(ctx, duration.Seconds(), r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) RecordRequestSize(
 	ctx context.Context, prop metric.HTTPRequestProperty, sizeBytes int64,
 ) {
-	r.requestSize.Record(ctx, float64(sizeBytes), r.reqPropToLabelPairs(prop)...)
+	r.requestSize.Record(ctx, sizeBytes, r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) RecordResponseSize(
 	ctx context.Context, prop metric.HTTPRequestProperty, sizeBytes int64,
 ) {
-	r.responseSize.Record(ctx, float64(sizeBytes), r.reqPropToLabelPairs(prop)...)
+	r.responseSize.Record(ctx, sizeBytes, r.reqPropToLabelPairs(prop)...)
 }
 
 func (r *httpRecorder) AddTotalRequests(

@@ -15,8 +15,8 @@ type metadata struct {
 // HTTPRequestDuration returns HTTP request duration metric metadata.
 func HTTPRequestDuration() metadata {
 	return metadata{
-		Name:        "http_request_duration_milliseconds",
-		Description: "The latency of the HTTP request in milliseconds.",
+		Name:        "http_request_duration_seconds",
+		Description: "The latency of the HTTP request in seconds.",
 	}
 }
 
