@@ -108,7 +108,7 @@ func (r *httpRecorder) initMeasurements() {
 
 func (r *httpRecorder) registerViews(cfg metric.HTTPRecorderConfig) error {
 	requestTagKeys := []tag.Key{r.hostKey, r.endpointKey, r.methodKey, r.statusKey}
-	inflightTagKeys := []tag.Key{r.hostKey, r.endpointKey}
+	inflightTagKeys := []tag.Key{r.hostKey, r.endpointKey, r.methodKey}
 
 	requestDurationView := &view.View{
 		Name:        metric.HTTPRequestDuration().Name,
