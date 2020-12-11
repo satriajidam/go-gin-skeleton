@@ -181,6 +181,7 @@ func (r *httpRecorder) ctxWithTagFromHTTPInfProperty(
 	newCtx, _ := tag.New(ctx,
 		tag.Upsert(r.hostKey, prop.Host),
 		tag.Upsert(r.endpointKey, prop.Endpoint),
+		tag.Upsert(r.methodKey, prop.Method),
 	)
 	return newCtx
 }

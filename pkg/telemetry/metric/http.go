@@ -7,22 +7,17 @@ import (
 
 // HTTPRequestProperty stores properties for the HTTP metrics of an incoming request.
 type HTTPRequestProperty struct {
-	// Host is the host that has served the request.
-	Host string
-	// Endpoint is the endpoint of the request handler.
+	Host     string
 	Endpoint string
-	// Method is the method of the request.
-	Method string
-	// Status is the response code of the request.
-	Status string
+	Method   string
+	Status   string
 }
 
 // HTTPInflightProperty stores properties for the HTTP metrics of an inflight request.
 type HTTPInflightProperty struct {
-	// Host is the host that has served the request.
-	Host string
-	// Endpoint is the endpoint of the request handler.
+	Host     string
 	Endpoint string
+	Method   string
 }
 
 // HTTPRecorder records and measures the HTTP metrics.

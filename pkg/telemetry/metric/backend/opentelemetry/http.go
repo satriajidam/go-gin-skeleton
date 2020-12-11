@@ -104,6 +104,7 @@ func (r *httpRecorder) infPropToLabelPairs(prop metric.HTTPInflightProperty) []l
 	return []label.KeyValue{
 		r.hostKey.String(prop.Host),
 		r.endpointKey.String(prop.Endpoint),
+		r.methodKey.String(prop.Method),
 	}
 }
 
